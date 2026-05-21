@@ -117,6 +117,16 @@
     font-weight: 600;
   }
   .month-popover-cell.selected:hover { background: var(--accent); }
+  .month-popover-cell.disabled,
+  .month-popover-cell[disabled] {
+    color: var(--text-faint); opacity: 0.35;
+    cursor: not-allowed; pointer-events: none;
+  }
+  .month-nav[disabled] {
+    color: var(--text-faint); opacity: 0.3;
+    cursor: not-allowed;
+  }
+  .month-nav[disabled]:hover { background: none; color: var(--text-faint); }
 
   .sync-status {
     display: flex; align-items: center; gap: 8px;
@@ -413,7 +423,7 @@
   }
 
   .plan-row {
-    display: grid; grid-template-columns: 1fr 120px;
+    display: grid; grid-template-columns: 1fr 110px 32px;
     gap: 12px; padding: 10px 14px;
     align-items: center; border-bottom: 1px solid var(--border);
   }
@@ -425,6 +435,33 @@
   }
   .plan-input.name-input { font-family: var(--body-font); }
   .plan-input:focus { border-color: var(--accent); }
+  .plan-row-delete {
+    background: none; border: none; color: var(--text-faint);
+    cursor: pointer; padding: 4px 8px; border-radius: 6px;
+    font-size: 16px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .plan-row-delete:hover {
+    color: var(--danger); background: rgba(255, 94, 94, 0.08);
+  }
+  .plan-row-add {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; padding: 12px 14px;
+    background: none; border: none; border-top: 1px dashed var(--border);
+    color: var(--text-dim); font-family: var(--body-font); font-size: 12px;
+    cursor: pointer; width: 100%;
+    transition: all 0.15s;
+  }
+  .plan-row-add:hover {
+    color: var(--accent); background: rgba(212, 255, 79, 0.04);
+  }
+  .plan-row-add-icon {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 1px solid currentColor;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 14px; line-height: 1;
+  }
   .plan-section {
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: 14px; margin-bottom: 16px; overflow: hidden;
@@ -443,16 +480,12 @@
     border-left: 3px solid var(--warn);
     border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
   }
-  .plan-banner.future { border-left-color: var(--accent); }
   .plan-banner-icon {
     font-size: 18px; color: var(--warn);
     width: 28px; height: 28px;
     display: flex; align-items: center; justify-content: center;
     background: rgba(255, 140, 66, 0.1);
     border-radius: 50%; flex-shrink: 0;
-  }
-  .plan-banner.future .plan-banner-icon {
-    color: var(--accent); background: rgba(212, 255, 79, 0.1);
   }
   .plan-banner-title { font-size: 13px; font-weight: 500; }
   .plan-banner-sub {
@@ -701,16 +734,21 @@ function renderMonthPopoverGrid() {
   document.getElementById('popover-year').textContent = popoverYear;
   const [activeY, activeM] = activeMonth.split('-').map(Number);
   const [curY, curM] = currentMonthKey().split('-').map(Number);
+  // Disable next-year navigation once we're at or past the current real-world year.
+  document.getElementById('year-next').disabled = popoverYear >= curY;
   grid.innerHTML = MONTH_NAMES.map((name, i) => {
     const m = i + 1;
     const isSelected = popoverYear === activeY && m === activeM;
     const isCurrent = popoverYear === curY && m === curM;
+    const isFuture = popoverYear > curY || (popoverYear === curY && m > curM);
     const cls = ['month-popover-cell'];
     if (isSelected) cls.push('selected');
     else if (isCurrent) cls.push('current');
-    return `<button type="button" class="${cls.join(' ')}" data-month="${m}">${name}</button>`;
+    if (isFuture) cls.push('disabled');
+    const disabledAttr = isFuture ? ' disabled aria-disabled="true"' : '';
+    return `<button type="button" class="${cls.join(' ')}" data-month="${m}"${disabledAttr}>${name}</button>`;
   }).join('');
-  grid.querySelectorAll('[data-month]').forEach(btn => {
+  grid.querySelectorAll('[data-month]:not([disabled])').forEach(btn => {
     btn.addEventListener('click', () => {
       const m = +btn.dataset.month;
       activeMonth = `${popoverYear}-${String(m).padStart(2, '0')}`;
@@ -1030,6 +1068,37 @@ function updatePlanItem(group, id, field, value) {
   saveLocal();
   debouncedSync();
 }
+function addCategory(group) {
+  const prefixMap = { needs: 'need', wants: 'want', savings: 'sav' };
+  const id = `${prefixMap[group]}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  currentPlan()[group].push({ id, name: 'New category', planned: 0 });
+  saveLocal();
+  render();
+  debouncedSync();
+  // Focus the new name input so the user can type immediately.
+  setTimeout(() => {
+    const el = document.querySelector(`.plan-input.name-input[data-id="${id}"]`);
+    if (el) { el.focus(); el.select(); }
+  }, 0);
+}
+function removeCategory(group, id) {
+  const items = currentPlan()[group];
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  // Safety check: block if this category has transactions in the current month.
+  const monthTotal = monthTxns()
+    .filter(t => t.categoryId === id)
+    .reduce((a, t) => a + t.amount, 0);
+  if (monthTotal > 0) {
+    toast(`Can't remove — "${item.name}" has $${fmt(monthTotal, 2)} in transactions this month`, 'error');
+    return;
+  }
+  if (!confirm(`Remove "${item.name}" from ${monthLabel(activeMonth)}?`)) return;
+  currentPlan()[group] = items.filter(i => i.id !== id);
+  saveLocal();
+  render();
+  debouncedSync();
+}
 function updateIncome(value) {
   currentPlan().income.takeHome = parseFloat(value) || 0;
   saveLocal();
@@ -1176,7 +1245,6 @@ function renderTransactions() {
 function renderPlan() {
   const sum = (items) => items.reduce((a, c) => a + c.planned, 0);
   const isPast = activeMonth < currentMonthKey();
-  const isFuture = activeMonth > currentMonthKey();
   const section = (key, label) => `
     <div class="plan-section">
       <div class="plan-section-head">
@@ -1187,13 +1255,18 @@ function renderPlan() {
         <div class="plan-row">
           <input class="plan-input name-input" value="${escapeHtml(item.name)}" data-group="${key}" data-id="${item.id}" data-field="name" />
           <input class="plan-input" type="number" value="${item.planned}" data-group="${key}" data-id="${item.id}" data-field="planned" />
+          <button class="plan-row-delete" data-action="remove-category" data-group="${key}" data-id="${item.id}" aria-label="Remove ${escapeHtml(item.name)}" title="Remove">×</button>
         </div>
       `).join('')}
+      <button class="plan-row-add" data-action="add-category" data-group="${key}">
+        <span class="plan-row-add-icon">+</span>
+        <span>Add ${label.toLowerCase()} category</span>
+      </button>
     </div>
   `;
-  const banner = (isPast || isFuture) ? `
-    <div class="plan-banner ${isPast ? 'past' : 'future'}">
-      <div class="plan-banner-icon">${isPast ? '⏱' : '→'}</div>
+  const banner = isPast ? `
+    <div class="plan-banner past">
+      <div class="plan-banner-icon">⏱</div>
       <div>
         <div class="plan-banner-title">Editing ${monthLabel(activeMonth)}</div>
         <div class="plan-banner-sub">Changes only affect this month — other months won't change.</div>
@@ -1287,8 +1360,11 @@ function attachViewHandlers() {
   document.querySelectorAll('[data-action]').forEach(btn => {
     btn.addEventListener('click', e => {
       const action = e.currentTarget.dataset.action;
+      const ds = e.currentTarget.dataset;
       if (action === 'reset-month') resetMonth();
-      else if (action === 'delete-txn') deleteTransaction(e.currentTarget.dataset.id);
+      else if (action === 'delete-txn') deleteTransaction(ds.id);
+      else if (action === 'add-category') addCategory(ds.group);
+      else if (action === 'remove-category') removeCategory(ds.group, ds.id);
       else if (action === 'manual-sync') {
         const idInput = document.getElementById('client-id-input');
         if (idInput) {
