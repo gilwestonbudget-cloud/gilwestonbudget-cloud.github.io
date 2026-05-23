@@ -13,7 +13,12 @@
 <script src="https://apis.google.com/js/api.js" async defer></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
+
+  /* ============================================================
+     THEME: Matcha (default) — original colors
+     ============================================================ */
+  :root,
+  [data-theme="matcha"] {
     --bg: #0f1410;
     --bg-card: #161c17;
     --bg-elevated: #1d2520;
@@ -24,13 +29,148 @@
     --text-faint: #5a6259;
     --accent: #d4ff4f;
     --accent-dim: #9ab838;
+    --accent-rgb: 212, 255, 79;
     --warn: #ff8c42;
     --danger: #ff5e5e;
     --good: #4fd49e;
+    --bar-needs: #6fa8dc;
+    --bar-wants: #ff8c42;
+    --bar-savings: #d4ff4f;
+    --glow-1: rgba(212, 255, 79, 0.04);
+    --glow-2: rgba(79, 212, 158, 0.03);
+  }
+
+  /* ============================================================
+     THEME: Midnight — cool blues
+     ============================================================ */
+  [data-theme="midnight"] {
+    --bg: #0a0f1a;
+    --bg-card: #131a28;
+    --bg-elevated: #1c2438;
+    --border: #2b3450;
+    --border-bright: #3d4970;
+    --text: #e6eaf2;
+    --text-dim: #8a93a8;
+    --text-faint: #5a6379;
+    --accent: #6fa8ff;
+    --accent-dim: #4a80d0;
+    --accent-rgb: 111, 168, 255;
+    --warn: #ffb84d;
+    --danger: #ff6b6b;
+    --good: #5fd7c2;
+    --bar-needs: #9b8cff;
+    --bar-wants: #ffb84d;
+    --bar-savings: #6fa8ff;
+    --glow-1: rgba(111, 168, 255, 0.05);
+    --glow-2: rgba(155, 140, 255, 0.04);
+  }
+
+  /* ============================================================
+     THEME: Warm — warm oranges & deep reds
+     ============================================================ */
+  [data-theme="warm"] {
+    --bg: #14100c;
+    --bg-card: #1d1813;
+    --bg-elevated: #28211a;
+    --border: #3a2f24;
+    --border-bright: #4e3f30;
+    --text: #f0e9e0;
+    --text-dim: #a89a8b;
+    --text-faint: #6e6055;
+    --accent: #ff9d4d;
+    --accent-dim: #d47a30;
+    --accent-rgb: 255, 157, 77;
+    --warn: #ffd166;
+    --danger: #ff5e5e;
+    --good: #a8d96f;
+    --bar-needs: #c97b63;
+    --bar-wants: #ffd166;
+    --bar-savings: #ff9d4d;
+    --glow-1: rgba(255, 157, 77, 0.05);
+    --glow-2: rgba(255, 94, 94, 0.03);
+  }
+
+  /* ============================================================
+     THEME: Pink — purples & magentas
+     ============================================================ */
+  [data-theme="pink"] {
+    --bg: #120c18;
+    --bg-card: #1c1424;
+    --bg-elevated: #261b30;
+    --border: #382748;
+    --border-bright: #4e3760;
+    --text: #ece4f2;
+    --text-dim: #a293ab;
+    --text-faint: #685878;
+    --accent: #d68fff;
+    --accent-dim: #a868cc;
+    --accent-rgb: 214, 143, 255;
+    --warn: #ffb070;
+    --danger: #ff6b8a;
+    --good: #7adba8;
+    --bar-needs: #7da6ff;
+    --bar-wants: #ffb070;
+    --bar-savings: #d68fff;
+    --glow-1: rgba(214, 143, 255, 0.05);
+    --glow-2: rgba(125, 166, 255, 0.03);
+  }
+
+  /* ============================================================
+     THEME: Slate — minimal monochrome
+     ============================================================ */
+  [data-theme="slate"] {
+    --bg: #111114;
+    --bg-card: #1a1a1f;
+    --bg-elevated: #25252d;
+    --border: #34343e;
+    --border-bright: #494955;
+    --text: #ececef;
+    --text-dim: #92929c;
+    --text-faint: #5e5e68;
+    --accent: #e8e8ec;
+    --accent-dim: #b8b8c0;
+    --accent-rgb: 232, 232, 236;
+    --warn: #f5b86b;
+    --danger: #ef6e6e;
+    --good: #6dcfa1;
+    --bar-needs: #7d9bc4;
+    --bar-wants: #f5b86b;
+    --bar-savings: #d6d6de;
+    --glow-1: rgba(232, 232, 236, 0.03);
+    --glow-2: rgba(125, 155, 196, 0.02);
+  }
+
+  /* ============================================================
+     THEME: Daylight — light mode
+     ============================================================ */
+  [data-theme="daylight"] {
+    --bg: #f6f5f0;
+    --bg-card: #ffffff;
+    --bg-elevated: #ecebe4;
+    --border: #d8d6cc;
+    --border-bright: #b8b5a6;
+    --text: #1f2419;
+    --text-dim: #5e6358;
+    --text-faint: #8a8e84;
+    --accent: #4a8a1c;
+    --accent-dim: #3a6e16;
+    --accent-rgb: 74, 138, 28;
+    --warn: #d97706;
+    --danger: #dc2626;
+    --good: #059669;
+    --bar-needs: #2563eb;
+    --bar-wants: #d97706;
+    --bar-savings: #4a8a1c;
+    --glow-1: rgba(74, 138, 28, 0.04);
+    --glow-2: rgba(37, 99, 235, 0.03);
+  }
+
+  :root {
     --display-font: 'Fraunces', Georgia, serif;
     --body-font: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
     --mono-font: 'JetBrains Mono', ui-monospace, monospace;
   }
+
   body {
     min-height: 100vh;
     background: var(--bg);
@@ -38,9 +178,10 @@
     font-family: var(--body-font);
     padding: max(24px, env(safe-area-inset-top)) 16px calc(100px + env(safe-area-inset-bottom)) 16px;
     background-image:
-      radial-gradient(circle at 15% 10%, rgba(212, 255, 79, 0.04) 0%, transparent 40%),
-      radial-gradient(circle at 85% 80%, rgba(79, 212, 158, 0.03) 0%, transparent 40%);
+      radial-gradient(circle at 15% 10%, var(--glow-1) 0%, transparent 40%),
+      radial-gradient(circle at 85% 80%, var(--glow-2) 0%, transparent 40%);
     -webkit-font-smoothing: antialiased;
+    transition: background-color 0.3s, color 0.3s;
   }
   .container { max-width: 1080px; margin: 0 auto; }
   .header {
@@ -158,7 +299,7 @@
   .settings-btn:hover { border-color: var(--border-bright); color: var(--text); }
   .settings-btn.active {
     border-color: var(--accent); color: var(--accent);
-    background: rgba(212, 255, 79, 0.06);
+    background: rgba(var(--accent-rgb), 0.06);
   }
   .settings-btn svg { display: block; }
 
@@ -193,7 +334,7 @@
   .hero-card::before {
     content: ''; position: absolute; top: 0; right: 0;
     width: 200px; height: 200px;
-    background: radial-gradient(circle, rgba(212, 255, 79, 0.08) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--accent-rgb), 0.08) 0%, transparent 70%);
     pointer-events: none;
   }
   .hero-label {
@@ -216,9 +357,9 @@
     border-radius: 4px; overflow: hidden; display: flex;
   }
   .hero-bar-seg { height: 100%; transition: width 0.4s ease; }
-  .hero-bar-needs { background: #6fa8dc; }
-  .hero-bar-wants { background: var(--warn); }
-  .hero-bar-savings { background: var(--accent); }
+  .hero-bar-needs { background: var(--bar-needs); }
+  .hero-bar-wants { background: var(--bar-wants); }
+  .hero-bar-savings { background: var(--bar-savings); }
   .hero-legend {
     display: flex; gap: 16px; margin-top: 12px;
     font-family: var(--mono-font); font-size: 11px; flex-wrap: wrap;
@@ -290,7 +431,7 @@
     width: 64px; height: 64px; background: var(--accent);
     color: var(--bg); border: none; border-radius: 50%;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 8px 24px rgba(212, 255, 79, 0.3);
+    box-shadow: 0 8px 24px rgba(var(--accent-rgb), 0.3);
     transition: transform 0.2s; z-index: 50;
     font-size: 32px; font-weight: 300; line-height: 1;
     padding-bottom: 4px;
@@ -328,13 +469,17 @@
     color: var(--text-faint); text-transform: uppercase;
     letter-spacing: 0.15em; margin-bottom: 8px;
   }
-  .form-input {
+  .form-input,
+  .form-select {
     width: 100%; background: var(--bg-elevated); border: 1px solid var(--border);
     border-radius: 10px; padding: 12px 14px; color: var(--text);
     font-family: var(--body-font); font-size: 15px; outline: none;
     color-scheme: dark;
   }
-  .form-input:focus { border-color: var(--accent); }
+  [data-theme="daylight"] .form-input,
+  [data-theme="daylight"] .form-select { color-scheme: light; }
+  .form-input:focus,
+  .form-select:focus { border-color: var(--accent); }
   .amount-input {
     font-family: var(--mono-font); font-size: 32px; font-weight: 500;
     text-align: center; letter-spacing: 0.02em;
@@ -346,7 +491,6 @@
     gap: 6px; max-height: 320px;
     overflow-y: auto; overflow-x: hidden;
     padding: 2px;
-    /* Slimmer scrollbar on WebKit (Safari/Chrome/iOS) */
     scrollbar-width: thin;
     scrollbar-color: var(--border-bright) transparent;
   }
@@ -366,7 +510,7 @@
   }
   .cat-pick-btn:hover { border-color: var(--border-bright); color: var(--text); }
   .cat-pick-btn.selected {
-    border-color: var(--accent); background: rgba(212, 255, 79, 0.08);
+    border-color: var(--accent); background: rgba(var(--accent-rgb), 0.08);
     color: var(--accent);
   }
   .cat-pick-group {
@@ -454,7 +598,7 @@
     transition: all 0.15s;
   }
   .plan-row-add:hover {
-    color: var(--accent); background: rgba(212, 255, 79, 0.04);
+    color: var(--accent); background: rgba(var(--accent-rgb), 0.04);
   }
   .plan-row-add-icon {
     width: 18px; height: 18px; border-radius: 50%;
@@ -493,22 +637,137 @@
     font-family: var(--mono-font); line-height: 1.4;
   }
 
-  .income-banner {
+  /* ============================================================
+     INCOME SECTION (multi-source)
+     ============================================================ */
+  .income-card {
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 20px; margin-bottom: 16px;
-    display: flex; justify-content: space-between; align-items: center; gap: 16px;
+    border-radius: 14px; margin-bottom: 16px; overflow: hidden;
   }
-  .income-banner label {
-    font-family: var(--mono-font); font-size: 11px; color: var(--text-faint);
-    text-transform: uppercase; letter-spacing: 0.15em;
+  .income-card-head {
+    padding: 14px 18px; background: var(--bg-elevated);
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 10px;
   }
-  .income-banner input {
-    background: var(--bg-elevated); border: 1px solid var(--border);
-    border-radius: 8px; padding: 10px 14px; color: var(--text);
+  .income-card-title {
+    font-family: var(--display-font); font-size: 18px; font-style: italic;
+  }
+  .income-card-total {
+    font-family: var(--mono-font); font-size: 13px; color: var(--accent);
+  }
+  .income-source {
+    padding: 14px 18px 6px; border-bottom: none;
+    display: grid; grid-template-columns: 1fr 130px 130px auto;
+    gap: 10px; align-items: center;
+  }
+  @media (max-width: 720px) {
+    .income-source { grid-template-columns: 1fr 1fr auto; }
+    .income-source .src-freq { grid-column: 1 / 2; }
+    .income-source .src-amount { grid-column: 2 / 3; }
+    .income-source .src-name { grid-column: 1 / -1; }
+    .income-source .src-delete { grid-column: 3 / 4; grid-row: 1; }
+  }
+  .income-source-meta {
+    padding: 12px 18px 16px;
+    margin-top: 4px;
+    border-bottom: 1px solid var(--border);
+    display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: center;
+    font-family: var(--mono-font); font-size: 11px; color: var(--text-dim);
+  }
+  .source-toggle {
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+    user-select: none;
+  }
+  .source-toggle input { accent-color: var(--accent); cursor: pointer; }
+  .source-net {
+    margin-left: auto; color: var(--text);
+    font-weight: 500;
+  }
+  .income-summary {
+    padding: 16px 18px; background: var(--bg-elevated);
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;
+  }
+  @media (max-width: 720px) {
+    .income-summary { grid-template-columns: 1fr; gap: 10px; }
+  }
+  .income-summary-item {
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .income-summary-label {
+    font-family: var(--mono-font); font-size: 10px;
+    color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.15em;
+  }
+  .income-summary-value {
     font-family: var(--mono-font); font-size: 18px; font-weight: 500;
-    outline: none; width: 160px; text-align: right;
   }
-  .income-banner input:focus { border-color: var(--accent); }
+  .income-summary-value.takehome { color: var(--accent); font-size: 22px; }
+
+  /* Tax breakdown details */
+  .tax-details {
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.15);
+  }
+  [data-theme="daylight"] .tax-details { background: rgba(0, 0, 0, 0.03); }
+  .tax-details summary {
+    cursor: pointer; font-family: var(--mono-font); font-size: 11px;
+    color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.12em;
+    list-style: none;
+  }
+  .tax-details summary::-webkit-details-marker { display: none; }
+  .tax-details summary::before {
+    content: '▸ '; display: inline-block; transition: transform 0.15s;
+    color: var(--text-faint);
+  }
+  .tax-details[open] summary::before { transform: rotate(90deg); }
+  .tax-details-body {
+    margin-top: 12px;
+    display: grid; gap: 6px;
+    font-family: var(--mono-font); font-size: 12px;
+  }
+  .tax-line {
+    display: flex; justify-content: space-between;
+    color: var(--text-dim);
+  }
+  .tax-line.total {
+    border-top: 1px solid var(--border); padding-top: 8px; margin-top: 6px;
+    color: var(--text); font-weight: 500;
+  }
+
+  /* Tax settings inside plan */
+  .tax-config {
+    padding: 14px 18px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  @media (max-width: 720px) {
+    .tax-config { grid-template-columns: 1fr; }
+  }
+  .tax-config-group { display: flex; flex-direction: column; gap: 6px; }
+  .tax-config-group label {
+    font-family: var(--mono-font); font-size: 10px;
+    color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.15em;
+  }
+  .tax-config-group input,
+  .tax-config-group select {
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px; color: var(--text);
+    font-family: var(--body-font); font-size: 13px; outline: none;
+    color-scheme: dark;
+  }
+  [data-theme="daylight"] .tax-config-group input,
+  [data-theme="daylight"] .tax-config-group select { color-scheme: light; }
+  .tax-config-group input:focus,
+  .tax-config-group select:focus { border-color: var(--accent); }
+
+  .src-delete-btn {
+    background: none; border: none; color: var(--text-faint);
+    cursor: pointer; padding: 6px 10px; border-radius: 6px;
+    font-size: 18px; line-height: 1;
+    transition: all 0.15s;
+  }
+  .src-delete-btn:hover {
+    color: var(--danger); background: rgba(255, 94, 94, 0.08);
+  }
 
   .settings-card {
     background: var(--bg-card); border: 1px solid var(--border);
@@ -545,6 +804,57 @@
     font-family: var(--mono-font); font-size: 11px;
     color: var(--accent);
   }
+
+  /* ============================================================
+     THEME PICKER
+     ============================================================ */
+  .theme-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px; margin-top: 12px;
+  }
+  .theme-card {
+    position: relative;
+    background: var(--bg-elevated); border: 2px solid var(--border);
+    border-radius: 12px; padding: 12px; cursor: pointer;
+    transition: all 0.2s; text-align: left;
+    display: flex; flex-direction: column; gap: 10px;
+    font-family: inherit; color: inherit;
+  }
+  .theme-card:hover { border-color: var(--border-bright); }
+  .theme-card.active { border-color: var(--accent); }
+  .theme-card-name {
+    font-size: 13px; font-weight: 500; color: var(--text);
+    padding-right: 22px; /* room for the corner checkmark */
+  }
+  .theme-card-check {
+    position: absolute; top: 8px; right: 8px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--accent); color: var(--bg);
+    display: none; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; line-height: 1;
+  }
+  .theme-card.active .theme-card-check { display: flex; }
+  .theme-swatch {
+    display: flex; gap: 4px; height: 32px; border-radius: 6px;
+    overflow: hidden; width: 100%;
+  }
+  .theme-swatch-seg {
+    flex: 1; min-width: 0; height: 100%;
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+
+  /* ============================================================
+     FOOTER
+     ============================================================ */
+  .app-footer {
+    margin-top: 48px; padding: 20px 0;
+    text-align: center;
+    font-family: var(--mono-font); font-size: 10px;
+    color: var(--text-faint);
+    text-transform: uppercase; letter-spacing: 0.2em;
+    border-top: 1px solid var(--border);
+  }
+  .app-footer .version { color: var(--text-dim); }
 
   .toast {
     position: fixed; bottom: calc(110px + env(safe-area-inset-bottom)); left: 50%;
@@ -604,6 +914,10 @@
   </div>
 
   <div id="view"></div>
+
+  <div class="app-footer">
+    Budget Ledger · <span class="version" id="version-label">v3.1.1</span>
+  </div>
 </div>
 
 <button class="fab" id="fab" aria-label="Add transaction">+</button>
@@ -612,6 +926,11 @@
 
 <script>
 // ============================================================
+//  APP VERSION
+// ============================================================
+const APP_VERSION = '3.1.1';
+
+// ============================================================
 //  STATE & DEFAULTS
 // ============================================================
 const STORAGE_KEY = 'budget-ledger-v1';
@@ -619,8 +938,165 @@ const CONFIG_KEY = 'budget-ledger-config-v1';
 const DRIVE_FILE_NAME = 'budget-ledger-data.json';
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 
+const AVAILABLE_THEMES = [
+  { id: 'matcha',   name: 'Matcha',   swatch: ['#0f1410', '#d4ff4f', '#6fa8dc'] },
+  { id: 'midnight', name: 'Midnight', swatch: ['#0a0f1a', '#6fa8ff', '#9b8cff'] },
+  { id: 'warm',    name: 'Warm',    swatch: ['#14100c', '#ff9d4d', '#ffd166'] },
+  { id: 'pink',     name: 'Pink',     swatch: ['#120c18', '#d68fff', '#7da6ff'] },
+  { id: 'slate',    name: 'Slate',    swatch: ['#111114', '#e8e8ec', '#7d9bc4'] },
+  { id: 'daylight', name: 'Daylight', swatch: ['#f6f5f0', '#4a8a1c', '#2563eb'] },
+];
+
+const PAY_FREQUENCIES = [
+  { id: 'weekly',     label: 'Weekly',      perMonth: 52/12 },
+  { id: 'biweekly',   label: 'Bi-weekly',   perMonth: 26/12 },
+  { id: 'semimonthly',label: 'Semi-monthly',perMonth: 24/12 },
+  { id: 'monthly',    label: 'Monthly',     perMonth: 1 },
+  { id: 'annual',     label: 'Annual',      perMonth: 1/12 },
+  { id: 'oneoff',     label: 'One-time',    perMonth: 1 }, // treated as a single month deposit
+];
+
+const FILING_STATUSES = [
+  { id: 'single', label: 'Single' },
+  { id: 'mfj',    label: 'Married filing jointly' },
+  { id: 'mfs',    label: 'Married filing separately' },
+  { id: 'hoh',    label: 'Head of household' },
+];
+
+// ============================================================
+//  TAX TABLES (2026 estimates)
+//  Federal brackets are projected 2026 figures based on inflation
+//  adjustments. FICA rates are statutory. State rates use top marginal
+//  flat-rate approximations — accurate enough for take-home estimation
+//  in a personal budgeting app. Users can override or skip withholding.
+// ============================================================
+
+// Standard deductions (2026 estimate)
+const STD_DEDUCTION = {
+  single: 15750,
+  mfj:    31500,
+  mfs:    15750,
+  hoh:    23625,
+};
+
+// Federal brackets (taxable income after std deduction)
+// Each row: [bracket top, marginal rate]. Last row top = Infinity.
+const FEDERAL_BRACKETS = {
+  single: [
+    [11925,   0.10],
+    [48475,   0.12],
+    [103350,  0.22],
+    [197300,  0.24],
+    [250525,  0.32],
+    [626350,  0.35],
+    [Infinity,0.37],
+  ],
+  mfj: [
+    [23850,   0.10],
+    [96950,   0.12],
+    [206700,  0.22],
+    [394600,  0.24],
+    [501050,  0.32],
+    [751600,  0.35],
+    [Infinity,0.37],
+  ],
+  mfs: [
+    [11925,   0.10],
+    [48475,   0.12],
+    [103350,  0.22],
+    [197300,  0.24],
+    [250525,  0.32],
+    [375800,  0.35],
+    [Infinity,0.37],
+  ],
+  hoh: [
+    [17000,   0.10],
+    [64850,   0.12],
+    [103350,  0.22],
+    [197300,  0.24],
+    [250500,  0.32],
+    [626350,  0.35],
+    [Infinity,0.37],
+  ],
+};
+
+// FICA: Social Security 6.2% up to wage base, Medicare 1.45% all wages,
+// + 0.9% additional Medicare over threshold ($200k single, $250k mfj)
+const SS_RATE = 0.062;
+const SS_WAGE_BASE = 176100; // 2025; close enough for 2026 budgeting
+const MEDICARE_RATE = 0.0145;
+const ADD_MEDICARE_RATE = 0.009;
+const ADD_MEDICARE_THRESHOLD = { single: 200000, mfj: 250000, mfs: 125000, hoh: 200000 };
+
+// State income tax — top marginal rate as a flat approximation.
+// "type" describes how it's applied. "0" means no state income tax.
+// Note: this is intentionally a simplification. For a precise number
+// the user should override via the "manual override" per source.
+const STATE_TAX = {
+  AL: { name: 'Alabama',        rate: 0.05 },
+  AK: { name: 'Alaska',         rate: 0.00 },
+  AZ: { name: 'Arizona',        rate: 0.025 },
+  AR: { name: 'Arkansas',       rate: 0.039 },
+  CA: { name: 'California',     rate: 0.093 },
+  CO: { name: 'Colorado',       rate: 0.044 },
+  CT: { name: 'Connecticut',    rate: 0.055 },
+  DE: { name: 'Delaware',       rate: 0.066 },
+  DC: { name: 'District of Columbia', rate: 0.0675 },
+  FL: { name: 'Florida',        rate: 0.00 },
+  GA: { name: 'Georgia',        rate: 0.0539 },
+  HI: { name: 'Hawaii',         rate: 0.082 },
+  ID: { name: 'Idaho',          rate: 0.058 },
+  IL: { name: 'Illinois',       rate: 0.0495 },
+  IN: { name: 'Indiana',        rate: 0.0305 },
+  IA: { name: 'Iowa',           rate: 0.038 },
+  KS: { name: 'Kansas',         rate: 0.0558 },
+  KY: { name: 'Kentucky',       rate: 0.04 },
+  LA: { name: 'Louisiana',      rate: 0.03 },
+  ME: { name: 'Maine',          rate: 0.0715 },
+  MD: { name: 'Maryland',       rate: 0.0575 },
+  MA: { name: 'Massachusetts',  rate: 0.05 },
+  MI: { name: 'Michigan',       rate: 0.0425 },
+  MN: { name: 'Minnesota',      rate: 0.0785 },
+  MS: { name: 'Mississippi',    rate: 0.044 },
+  MO: { name: 'Missouri',       rate: 0.047 },
+  MT: { name: 'Montana',        rate: 0.059 },
+  NE: { name: 'Nebraska',       rate: 0.052 },
+  NV: { name: 'Nevada',         rate: 0.00 },
+  NH: { name: 'New Hampshire',  rate: 0.00 },
+  NJ: { name: 'New Jersey',     rate: 0.0637 },
+  NM: { name: 'New Mexico',     rate: 0.049 },
+  NY: { name: 'New York',       rate: 0.0685 },
+  NC: { name: 'North Carolina', rate: 0.0425 },
+  ND: { name: 'North Dakota',   rate: 0.025 },
+  OH: { name: 'Ohio',           rate: 0.035 },
+  OK: { name: 'Oklahoma',       rate: 0.0475 },
+  OR: { name: 'Oregon',         rate: 0.087 },
+  PA: { name: 'Pennsylvania',   rate: 0.0307 },
+  RI: { name: 'Rhode Island',   rate: 0.0599 },
+  SC: { name: 'South Carolina', rate: 0.062 },
+  SD: { name: 'South Dakota',   rate: 0.00 },
+  TN: { name: 'Tennessee',      rate: 0.00 },
+  TX: { name: 'Texas',          rate: 0.00 },
+  UT: { name: 'Utah',           rate: 0.0455 },
+  VT: { name: 'Vermont',        rate: 0.066 },
+  VA: { name: 'Virginia',       rate: 0.0575 },
+  WA: { name: 'Washington',     rate: 0.00 },
+  WV: { name: 'West Virginia',  rate: 0.0482 },
+  WI: { name: 'Wisconsin',      rate: 0.0539 },
+  WY: { name: 'Wyoming',        rate: 0.00 },
+};
+
+// Default plan now ships with empty income.sources and a tax profile.
 const DEFAULT_PLAN = {
-  income: { takeHome: 0 },
+  income: {
+    sources: [], // { id, name, gross, frequency, applyTax }
+    tax: {
+      filingStatus: 'single',
+      state: 'TX',          // default to no-state-tax to be safe
+      localRate: 0,         // user-entered, percent (e.g. 1.5 = 1.5%)
+      manualOverride: null, // if set, replaces computed take-home (number, dollars/month)
+    },
+  },
   savings: [
     { id: 'sav-401k', name: '401(k)', planned: 0 },
     { id: 'sav-hsa', name: 'HSA contributions', planned: 0 },
@@ -656,39 +1132,60 @@ const DEFAULT_PLAN = {
 };
 
 let state = {
-  plans: {},        // { '2026-05': { income, savings, needs, wants }, ... }
-  transactions: {}, // { '2026-05': [...] }
+  plans: {},
+  transactions: {},
   updatedAt: 0,
 };
 
-// Deep clone helper — plans contain nested arrays of objects.
+// Deep clone helper.
 function clonePlan(plan) {
   return JSON.parse(JSON.stringify(plan));
 }
 
 // Returns the plan for the given month, creating it via carryover if missing.
-// Carryover rule: clone the plan from the most recent prior month that has one,
-// or fall back to DEFAULT_PLAN if none exist yet.
 function planForMonth(monthKey) {
-  if (state.plans[monthKey]) return state.plans[monthKey];
+  if (state.plans[monthKey]) {
+    ensurePlanShape(state.plans[monthKey]);
+    return state.plans[monthKey];
+  }
   const priorKeys = Object.keys(state.plans).filter(k => k < monthKey).sort();
   const source = priorKeys.length
     ? state.plans[priorKeys[priorKeys.length - 1]]
     : DEFAULT_PLAN;
   state.plans[monthKey] = clonePlan(source);
+  ensurePlanShape(state.plans[monthKey]);
   return state.plans[monthKey];
 }
 
-// Shortcut: plan for the currently viewed month.
 function currentPlan() {
   return planForMonth(activeMonth);
 }
 
-// Migrate older state shapes to the new per-month plans model.
+// Make sure any plan object has the v3 shape (income.sources, income.tax, etc.).
+function ensurePlanShape(plan) {
+  if (!plan.income) plan.income = { sources: [], tax: clonePlan(DEFAULT_PLAN.income.tax) };
+  // v2 -> v3: takeHome single number becomes a single source w/ tax disabled.
+  if (typeof plan.income.takeHome === 'number' && !plan.income.sources) {
+    plan.income.sources = plan.income.takeHome > 0 ? [{
+      id: 'src-legacy-' + Date.now(),
+      name: 'Take-home (legacy)',
+      gross: plan.income.takeHome,
+      frequency: 'monthly',
+      applyTax: false,
+    }] : [];
+    delete plan.income.takeHome;
+  }
+  if (!Array.isArray(plan.income.sources)) plan.income.sources = [];
+  if (!plan.income.tax) plan.income.tax = clonePlan(DEFAULT_PLAN.income.tax);
+  // Backfill any missing tax fields.
+  const t = plan.income.tax;
+  if (!t.filingStatus) t.filingStatus = 'single';
+  if (!t.state) t.state = 'TX';
+  if (typeof t.localRate !== 'number') t.localRate = 0;
+  if (t.manualOverride === undefined) t.manualOverride = null;
+}
+
 function migrateState() {
-  // v1/v2: state.plan was a single shared object. Move it into every month
-  // that has transactions so historical math stays consistent, plus the
-  // current month so the user lands somewhere sensible.
   if (state.plan && !state.plans) {
     state.plans = {};
     const monthsWithData = Object.keys(state.transactions || {});
@@ -698,8 +1195,11 @@ function migrateState() {
   }
   if (!state.plans) state.plans = {};
   if (!state.transactions) state.transactions = {};
+  // Migrate every stored plan to the v3 income shape.
+  Object.values(state.plans).forEach(ensurePlanShape);
 }
-let config = { clientId: '' };
+
+let config = { clientId: '', theme: 'matcha' };
 let activeMonth = currentMonthKey();
 let activeTab = 'dashboard';
 let driveFileId = null;
@@ -721,9 +1221,8 @@ function monthLabel(key) {
   return new Date(+y, +m - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
-// Month picker — custom dropdown that works the same on iOS Safari and macOS browsers.
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-let popoverYear = null; // year currently shown in the popover (not necessarily selected)
+let popoverYear = null;
 
 function updateMonthTrigger() {
   const el = document.getElementById('month-trigger-label');
@@ -734,7 +1233,6 @@ function renderMonthPopoverGrid() {
   document.getElementById('popover-year').textContent = popoverYear;
   const [activeY, activeM] = activeMonth.split('-').map(Number);
   const [curY, curM] = currentMonthKey().split('-').map(Number);
-  // Disable next-year navigation once we're at or past the current real-world year.
   document.getElementById('year-next').disabled = popoverYear >= curY;
   grid.innerHTML = MONTH_NAMES.map((name, i) => {
     const m = i + 1;
@@ -762,7 +1260,6 @@ function openMonthPopover() {
   document.getElementById('month-trigger').setAttribute('aria-expanded', 'true');
   document.getElementById('month-popover').hidden = false;
   renderMonthPopoverGrid();
-  // Defer so this same click doesn't immediately close it.
   setTimeout(() => document.addEventListener('click', outsideMonthClick), 0);
 }
 function closeMonthPopover() {
@@ -806,6 +1303,119 @@ function toast(msg, kind = '') {
 }
 
 // ============================================================
+//  THEME
+// ============================================================
+function applyTheme(themeId) {
+  const valid = AVAILABLE_THEMES.find(t => t.id === themeId);
+  const id = valid ? themeId : 'matcha';
+  document.documentElement.setAttribute('data-theme', id);
+  config.theme = id;
+}
+
+// ============================================================
+//  TAX ENGINE
+// ============================================================
+
+// Compute federal income tax owed on a given annual taxable income
+// using the brackets table.
+function federalTaxOwed(taxableAnnual, brackets) {
+  let tax = 0;
+  let prevTop = 0;
+  for (const [top, rate] of brackets) {
+    if (taxableAnnual <= prevTop) break;
+    const slice = Math.min(taxableAnnual, top) - prevTop;
+    tax += slice * rate;
+    prevTop = top;
+    if (taxableAnnual <= top) break;
+  }
+  return Math.max(0, tax);
+}
+
+// Given an array of income sources and a tax profile, compute monthly
+// gross, federal, fica, state, local, net per source, plus totals.
+function computeIncome(income) {
+  const tax = income.tax;
+  const filing = tax.filingStatus in FEDERAL_BRACKETS ? tax.filingStatus : 'single';
+  const stateInfo = STATE_TAX[tax.state] || { rate: 0, name: tax.state };
+  const localRate = (tax.localRate || 0) / 100;
+
+  // Step 1: compute monthly gross per source and overall.
+  const sources = income.sources.map(src => {
+    const freq = PAY_FREQUENCIES.find(f => f.id === src.frequency) || PAY_FREQUENCIES[3];
+    const monthlyGross = (src.gross || 0) * freq.perMonth;
+    return { ...src, monthlyGross, _freq: freq };
+  });
+
+  const taxedSources = sources.filter(s => s.applyTax);
+  const taxedMonthlyTotal = taxedSources.reduce((a, s) => a + s.monthlyGross, 0);
+  const untaxedMonthlyTotal = sources.filter(s => !s.applyTax).reduce((a, s) => a + s.monthlyGross, 0);
+  const taxedAnnual = taxedMonthlyTotal * 12;
+
+  // Step 2: federal income tax on taxed-source income.
+  const stdDed = STD_DEDUCTION[filing] || STD_DEDUCTION.single;
+  const taxableAnnual = Math.max(0, taxedAnnual - stdDed);
+  const federalAnnual = federalTaxOwed(taxableAnnual, FEDERAL_BRACKETS[filing]);
+
+  // Step 3: FICA on taxed wages.
+  const ssAnnual = Math.min(taxedAnnual, SS_WAGE_BASE) * SS_RATE;
+  const medicareAnnual = taxedAnnual * MEDICARE_RATE;
+  const addThresh = ADD_MEDICARE_THRESHOLD[filing] || ADD_MEDICARE_THRESHOLD.single;
+  const addMedicareAnnual = Math.max(0, taxedAnnual - addThresh) * ADD_MEDICARE_RATE;
+  const ficaAnnual = ssAnnual + medicareAnnual + addMedicareAnnual;
+
+  // Step 4: state and local income tax (flat-rate approximation on taxed gross).
+  const stateAnnual = taxedAnnual * (stateInfo.rate || 0);
+  const localAnnual = taxedAnnual * localRate;
+
+  // Monthly equivalents.
+  const federalMonthly = federalAnnual / 12;
+  const ficaMonthly = ficaAnnual / 12;
+  const ssMonthly = ssAnnual / 12;
+  const medicareMonthly = (medicareAnnual + addMedicareAnnual) / 12;
+  const stateMonthly = stateAnnual / 12;
+  const localMonthly = localAnnual / 12;
+  const totalTaxMonthly = federalMonthly + ficaMonthly + stateMonthly + localMonthly;
+
+  // Compute per-source net by allocating taxes pro-rata across taxed sources.
+  const totalTaxedGross = taxedMonthlyTotal || 1; // avoid div-by-zero
+  sources.forEach(s => {
+    if (s.applyTax) {
+      const share = s.monthlyGross / totalTaxedGross;
+      s.taxMonthly = totalTaxMonthly * share;
+      s.netMonthly = s.monthlyGross - s.taxMonthly;
+    } else {
+      s.taxMonthly = 0;
+      s.netMonthly = s.monthlyGross;
+    }
+  });
+
+  const grossMonthlyTotal = taxedMonthlyTotal + untaxedMonthlyTotal;
+  const computedNetMonthly = grossMonthlyTotal - totalTaxMonthly;
+  const takeHomeMonthly = (tax.manualOverride !== null && tax.manualOverride !== undefined)
+    ? tax.manualOverride
+    : computedNetMonthly;
+
+  return {
+    sources,
+    grossMonthly: grossMonthlyTotal,
+    taxedMonthly: taxedMonthlyTotal,
+    untaxedMonthly: untaxedMonthlyTotal,
+    federalMonthly,
+    ficaMonthly,
+    ssMonthly,
+    medicareMonthly,
+    stateMonthly,
+    localMonthly,
+    totalTaxMonthly,
+    netMonthly: computedNetMonthly,
+    takeHomeMonthly,
+    overridden: tax.manualOverride !== null && tax.manualOverride !== undefined,
+    stateInfo,
+    filingStatus: filing,
+  };
+}
+
+// ============================================================
 //  LOCAL STORAGE
 // ============================================================
 function loadLocal() {
@@ -815,7 +1425,10 @@ function loadLocal() {
   } catch {}
   try {
     const raw = localStorage.getItem(CONFIG_KEY);
-    if (raw) config = JSON.parse(raw);
+    if (raw) {
+      const loaded = JSON.parse(raw);
+      config = { clientId: '', theme: 'matcha', ...loaded };
+    }
   } catch {}
   migrateState();
 }
@@ -837,9 +1450,7 @@ function setSyncStatus(status, text) {
   el.querySelector('.sync-dot').classList.toggle('spin', status === 'syncing');
 }
 
-window.gapiInit = function() {
-  // called via onload from gapi script
-};
+window.gapiInit = function() {};
 function loadGapi() {
   return new Promise((resolve) => {
     if (gapiReady) return resolve();
@@ -883,7 +1494,7 @@ async function initAuth() {
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: config.clientId,
     scope: DRIVE_SCOPE,
-    callback: '', // set per request
+    callback: '',
   });
   return true;
 }
@@ -978,7 +1589,6 @@ async function sync(options = {}) {
     if (existing) {
       driveFileId = existing.id;
       const remote = await downloadDriveFile(driveFileId);
-      // Merge: newer updatedAt wins (whole-file basis)
       if (remote.updatedAt && remote.updatedAt > (state.updatedAt || 0)) {
         state = remote;
         migrateState();
@@ -990,7 +1600,6 @@ async function sync(options = {}) {
         toast('Pushed changes to Drive', 'success');
       }
     } else {
-      // No file yet — create it
       driveFileId = await uploadDriveFile(null, state);
       toast('Created Drive file', 'success');
     }
@@ -1029,6 +1638,9 @@ function groupTotals() {
     wants: sum(currentPlan().wants), wantsPlanned: sumP(currentPlan().wants),
     savings: sum(currentPlan().savings), savingsPlanned: sumP(currentPlan().savings),
   };
+}
+function currentTakeHome() {
+  return computeIncome(currentPlan().income).takeHomeMonthly;
 }
 
 // ============================================================
@@ -1075,7 +1687,6 @@ function addCategory(group) {
   saveLocal();
   render();
   debouncedSync();
-  // Focus the new name input so the user can type immediately.
   setTimeout(() => {
     const el = document.querySelector(`.plan-input.name-input[data-id="${id}"]`);
     if (el) { el.focus(); el.select(); }
@@ -1085,7 +1696,6 @@ function removeCategory(group, id) {
   const items = currentPlan()[group];
   const item = items.find(i => i.id === id);
   if (!item) return;
-  // Safety check: block if this category has transactions in the current month.
   const monthTotal = monthTxns()
     .filter(t => t.categoryId === id)
     .reduce((a, t) => a + t.amount, 0);
@@ -1099,8 +1709,53 @@ function removeCategory(group, id) {
   render();
   debouncedSync();
 }
-function updateIncome(value) {
-  currentPlan().income.takeHome = parseFloat(value) || 0;
+
+// ----- Income source actions -----
+function addIncomeSource() {
+  const plan = currentPlan();
+  plan.income.sources.push({
+    id: 'src-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    name: 'New income source',
+    gross: 0,
+    frequency: 'biweekly',
+    applyTax: true,
+  });
+  saveLocal();
+  render();
+  debouncedSync();
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('.income-source .src-name');
+    const last = inputs[inputs.length - 1];
+    if (last) { last.focus(); last.select(); }
+  }, 0);
+}
+function updateIncomeSource(id, field, value) {
+  const src = currentPlan().income.sources.find(s => s.id === id);
+  if (!src) return;
+  if (field === 'gross') src.gross = parseFloat(value) || 0;
+  else if (field === 'applyTax') src.applyTax = !!value;
+  else src[field] = value;
+  saveLocal();
+  render();
+  debouncedSync();
+}
+function removeIncomeSource(id) {
+  const src = currentPlan().income.sources.find(s => s.id === id);
+  if (!src) return;
+  if (!confirm(`Remove income source "${src.name}"?`)) return;
+  currentPlan().income.sources = currentPlan().income.sources.filter(s => s.id !== id);
+  saveLocal();
+  render();
+  debouncedSync();
+}
+function updateTaxConfig(field, value) {
+  const tax = currentPlan().income.tax;
+  if (field === 'localRate') tax.localRate = parseFloat(value) || 0;
+  else if (field === 'manualOverride') {
+    const trimmed = String(value).trim();
+    tax.manualOverride = trimmed === '' ? null : (parseFloat(trimmed) || 0);
+  }
+  else tax[field] = value;
   saveLocal();
   render();
   debouncedSync();
@@ -1116,6 +1771,7 @@ function render() {
     t.classList.toggle('active', t.dataset.tab === activeTab);
   });
   document.getElementById('settings-btn').classList.toggle('active', activeTab === 'settings');
+  document.getElementById('version-label').textContent = 'v' + APP_VERSION;
   const view = document.getElementById('view');
   if (activeTab === 'dashboard') view.innerHTML = renderDashboard();
   else if (activeTab === 'transactions') view.innerHTML = renderTransactions();
@@ -1126,14 +1782,14 @@ function render() {
 
 function renderDashboard() {
   const { needs, wants, savings, needsPlanned, wantsPlanned, savingsPlanned } = groupTotals();
-  const takeHome = currentPlan().income.takeHome;
+  const takeHome = currentTakeHome();
   const allSpent = needs + wants + savings;
   const remaining = takeHome - allSpent;
   const remainingPct = takeHome > 0 ? (remaining / takeHome) * 100 : 0;
   const needsPct = takeHome > 0 ? (needs / takeHome) * 100 : 0;
   const wantsPct = takeHome > 0 ? (wants / takeHome) * 100 : 0;
   const savingsPct = takeHome > 0 ? (savings / takeHome) * 100 : 0;
-  const remainingState = remaining < 0 ? 'negative' : remaining < takeHome * 0.05 ? 'warn' : '';
+  const remainingState = remaining < 0 ? 'negative' : (takeHome > 0 && remaining < takeHome * 0.05) ? 'warn' : '';
   const txnCount = monthTxns().length;
   const spent = spentByCategory();
 
@@ -1170,16 +1826,16 @@ function renderDashboard() {
       <div class="hero-card">
         <div class="hero-label">Remaining this month</div>
         <div class="hero-amount ${remainingState}">$${fmt(remaining)}</div>
-        <div class="hero-detail">of $${fmt(takeHome)} take-home · ${remainingPct.toFixed(0)}% unspent · ${txnCount} transactions logged</div>
+        <div class="hero-detail">of $${fmt(takeHome)} take-home · ${takeHome > 0 ? remainingPct.toFixed(0) : '0'}% unspent · ${txnCount} transactions logged</div>
         <div class="hero-bar">
           <div class="hero-bar-seg hero-bar-needs" style="width: ${Math.min(needsPct, 100)}%"></div>
           <div class="hero-bar-seg hero-bar-wants" style="width: ${Math.min(wantsPct, 100)}%"></div>
           <div class="hero-bar-seg hero-bar-savings" style="width: ${Math.min(savingsPct, 100)}%"></div>
         </div>
         <div class="hero-legend">
-          <div class="hero-legend-item"><div class="hero-legend-dot" style="background:#6fa8dc"></div>Needs $${fmt(needs)} (${needsPct.toFixed(0)}%)</div>
-          <div class="hero-legend-item"><div class="hero-legend-dot" style="background:var(--warn)"></div>Wants $${fmt(wants)} (${wantsPct.toFixed(0)}%)</div>
-          <div class="hero-legend-item"><div class="hero-legend-dot" style="background:var(--accent)"></div>Savings $${fmt(savings)} (${savingsPct.toFixed(0)}%)</div>
+          <div class="hero-legend-item"><div class="hero-legend-dot" style="background:var(--bar-needs)"></div>Needs $${fmt(needs)} (${needsPct.toFixed(0)}%)</div>
+          <div class="hero-legend-item"><div class="hero-legend-dot" style="background:var(--bar-wants)"></div>Wants $${fmt(wants)} (${wantsPct.toFixed(0)}%)</div>
+          <div class="hero-legend-item"><div class="hero-legend-dot" style="background:var(--bar-savings)"></div>Savings $${fmt(savings)} (${savingsPct.toFixed(0)}%)</div>
         </div>
       </div>
       <div class="summary-card">
@@ -1242,6 +1898,119 @@ function renderTransactions() {
   `;
 }
 
+function renderIncomeSection() {
+  const plan = currentPlan();
+  const inc = computeIncome(plan.income);
+  const tax = plan.income.tax;
+
+  const sourceRows = inc.sources.map(s => `
+    <div class="income-source" data-src-id="${s.id}">
+      <input class="plan-input name-input src-name" type="text"
+             value="${escapeHtml(s.name)}"
+             data-src-id="${s.id}" data-field="name"
+             placeholder="Source name" />
+      <input class="plan-input src-amount" type="number" step="0.01" inputmode="decimal"
+             value="${s.gross || 0}"
+             data-src-id="${s.id}" data-field="gross"
+             placeholder="Amount" />
+      <select class="plan-input src-freq"
+              data-src-id="${s.id}" data-field="frequency">
+        ${PAY_FREQUENCIES.map(f => `<option value="${f.id}" ${s.frequency === f.id ? 'selected' : ''}>${f.label}</option>`).join('')}
+      </select>
+      <button class="src-delete-btn src-delete" data-action="remove-source" data-src-id="${s.id}" aria-label="Remove source">×</button>
+    </div>
+    <div class="income-source-meta">
+      <label class="source-toggle">
+        <input type="checkbox" data-src-id="${s.id}" data-field="applyTax" ${s.applyTax ? 'checked' : ''} />
+        <span>Apply tax withholding</span>
+      </label>
+      <span>Monthly gross: <strong style="color:var(--text);">$${fmt(s.monthlyGross, 2)}</strong></span>
+      ${s.applyTax ? `<span>Tax: $${fmt(s.taxMonthly, 2)}</span>` : '<span style="color:var(--good);">No tax</span>'}
+      <span class="source-net">Net: $${fmt(s.netMonthly, 2)}</span>
+    </div>
+  `).join('');
+
+  const taxBreakdown = `
+    <details class="tax-details">
+      <summary>Tax breakdown (monthly estimate)</summary>
+      <div class="tax-details-body">
+        <div class="tax-line"><span>Gross income (taxed sources)</span><span>$${fmt(inc.taxedMonthly, 2)}</span></div>
+        ${inc.untaxedMonthly > 0 ? `<div class="tax-line"><span>Untaxed income</span><span>+$${fmt(inc.untaxedMonthly, 2)}</span></div>` : ''}
+        <div class="tax-line"><span>Federal income tax</span><span>−$${fmt(inc.federalMonthly, 2)}</span></div>
+        <div class="tax-line"><span>Social Security (6.2%)</span><span>−$${fmt(inc.ssMonthly, 2)}</span></div>
+        <div class="tax-line"><span>Medicare (1.45%+)</span><span>−$${fmt(inc.medicareMonthly, 2)}</span></div>
+        <div class="tax-line"><span>${escapeHtml(inc.stateInfo.name || 'State')} tax</span><span>−$${fmt(inc.stateMonthly, 2)}</span></div>
+        ${inc.localMonthly > 0 ? `<div class="tax-line"><span>Local tax (${tax.localRate}%)</span><span>−$${fmt(inc.localMonthly, 2)}</span></div>` : ''}
+        <div class="tax-line total"><span>Estimated take-home${inc.overridden ? ' (overridden)' : ''}</span><span>$${fmt(inc.takeHomeMonthly, 2)}</span></div>
+      </div>
+    </details>
+  `;
+
+  return `
+    <div class="income-card">
+      <div class="income-card-head">
+        <span class="income-card-title">Income</span>
+        <span class="income-card-total">$${fmt(inc.takeHomeMonthly, 2)} / mo take-home</span>
+      </div>
+
+      ${inc.sources.length === 0 ? `
+        <div style="padding: 24px 18px; text-align: center; color: var(--text-faint); font-size: 13px;">
+          <div style="font-family: var(--display-font); font-style: italic; font-size: 18px; color: var(--text-dim); margin-bottom: 6px;">No income sources yet</div>
+          <div>Add your paycheck, side gigs, or any other income below.</div>
+        </div>
+      ` : sourceRows}
+
+      <button class="plan-row-add" data-action="add-source">
+        <span class="plan-row-add-icon">+</span>
+        <span>Add income source</span>
+      </button>
+
+      <div class="tax-config">
+        <div class="tax-config-group">
+          <label>Filing status</label>
+          <select data-tax-field="filingStatus">
+            ${FILING_STATUSES.map(f => `<option value="${f.id}" ${tax.filingStatus === f.id ? 'selected' : ''}>${f.label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="tax-config-group">
+          <label>State</label>
+          <select data-tax-field="state">
+            ${Object.entries(STATE_TAX).map(([code, info]) => `<option value="${code}" ${tax.state === code ? 'selected' : ''}>${info.name} (${(info.rate * 100).toFixed(2)}%)</option>`).join('')}
+          </select>
+        </div>
+        <div class="tax-config-group">
+          <label>Local tax rate (%)</label>
+          <input type="number" step="0.01" min="0" data-tax-field="localRate"
+                 value="${tax.localRate}" placeholder="0" />
+        </div>
+        <div class="tax-config-group">
+          <label>Manual take-home override (monthly)</label>
+          <input type="number" step="0.01" min="0" data-tax-field="manualOverride"
+                 value="${tax.manualOverride !== null && tax.manualOverride !== undefined ? tax.manualOverride : ''}"
+                 placeholder="Leave blank to use estimate" />
+        </div>
+      </div>
+
+      ${taxBreakdown}
+
+      <div class="income-summary">
+        <div class="income-summary-item">
+          <span class="income-summary-label">Gross monthly</span>
+          <span class="income-summary-value">$${fmt(inc.grossMonthly, 2)}</span>
+        </div>
+        <div class="income-summary-item">
+          <span class="income-summary-label">Total tax</span>
+          <span class="income-summary-value">$${fmt(inc.totalTaxMonthly, 2)}</span>
+        </div>
+        <div class="income-summary-item">
+          <span class="income-summary-label">Take-home</span>
+          <span class="income-summary-value takehome">$${fmt(inc.takeHomeMonthly, 2)}</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderPlan() {
   const sum = (items) => items.reduce((a, c) => a + c.planned, 0);
   const isPast = activeMonth < currentMonthKey();
@@ -1275,10 +2044,7 @@ function renderPlan() {
   ` : '';
   return `
     ${banner}
-    <div class="income-banner">
-      <label>Monthly take-home</label>
-      <input type="number" value="${currentPlan().income.takeHome}" id="income-input" />
-    </div>
+    ${renderIncomeSection()}
     ${section('savings', 'Savings')}
     ${section('needs', 'Needs')}
     ${section('wants', 'Wants')}
@@ -1286,7 +2052,30 @@ function renderPlan() {
 }
 
 function renderSettings() {
+  const themeCards = AVAILABLE_THEMES.map(t => `
+    <button class="theme-card ${config.theme === t.id ? 'active' : ''}" data-action="set-theme" data-theme-id="${t.id}">
+      <span class="theme-card-check">✓</span>
+      <div class="theme-card-name">${t.name}</div>
+      <div class="theme-swatch">
+        ${t.swatch.map(c => `<div class="theme-swatch-seg" style="background:${c}"></div>`).join('')}
+      </div>
+    </button>
+  `).join('');
+
   return `
+    <div class="settings-card">
+      <h2 class="settings-title">Appearance</h2>
+      <div class="settings-row" style="border-bottom:none;flex-direction:column;align-items:stretch;">
+        <div class="settings-info" style="margin-bottom:8px;">
+          <div class="settings-label">Color theme</div>
+          <div class="settings-desc">Choose a theme. Your selection is saved on this device.</div>
+        </div>
+        <div class="theme-grid">
+          ${themeCards}
+        </div>
+      </div>
+    </div>
+
     <div class="settings-card">
       <h2 class="settings-title">Google Drive sync</h2>
       <div class="settings-row">
@@ -1335,6 +2124,22 @@ function renderSettings() {
         <input type="file" id="import-input" accept="application/json" style="display:none" />
       </div>
     </div>
+
+    <div class="settings-card">
+      <h2 class="settings-title">About</h2>
+      <div class="settings-row">
+        <div class="settings-info">
+          <div class="settings-label">Budget Ledger</div>
+          <div class="settings-desc">Version ${APP_VERSION}. A simple, private, local-first monthly budget tracker.</div>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-info">
+          <div class="settings-label">Tax estimates</div>
+          <div class="settings-desc">Tax calculations use 2026 federal brackets, statutory FICA rates, and approximate state top marginal rates. These are estimates for budgeting — not tax advice. If your withholding differs, use the manual override field in the Plan tab.</div>
+        </div>
+      </div>
+    </div>
   `;
 }
 
@@ -1342,18 +2147,31 @@ function renderSettings() {
 //  HANDLERS
 // ============================================================
 function attachViewHandlers() {
-  // Tab buttons handled globally below
-
-  // Income input
-  const inc = document.getElementById('income-input');
-  if (inc) inc.addEventListener('change', e => updateIncome(e.target.value));
-
   // Plan inputs
   document.querySelectorAll('.plan-input').forEach(input => {
+    if (input.dataset.srcId || input.dataset.taxField) return; // handled separately
     input.addEventListener('change', e => {
       const { group, id, field } = e.target.dataset;
+      if (!group) return;
       updatePlanItem(group, id, field, e.target.value);
     });
+  });
+
+  // Income source inputs (text/number/select)
+  document.querySelectorAll('[data-src-id]').forEach(el => {
+    if (el.matches('button')) return; // delete buttons handled by data-action
+    const field = el.dataset.field;
+    if (!field) return;
+    if (el.type === 'checkbox') {
+      el.addEventListener('change', e => updateIncomeSource(el.dataset.srcId, field, e.target.checked));
+    } else {
+      el.addEventListener('change', e => updateIncomeSource(el.dataset.srcId, field, e.target.value));
+    }
+  });
+
+  // Tax config controls
+  document.querySelectorAll('[data-tax-field]').forEach(el => {
+    el.addEventListener('change', e => updateTaxConfig(el.dataset.taxField, e.target.value));
   });
 
   // Action buttons
@@ -1365,6 +2183,13 @@ function attachViewHandlers() {
       else if (action === 'delete-txn') deleteTransaction(ds.id);
       else if (action === 'add-category') addCategory(ds.group);
       else if (action === 'remove-category') removeCategory(ds.group, ds.id);
+      else if (action === 'add-source') addIncomeSource();
+      else if (action === 'remove-source') removeIncomeSource(ds.srcId);
+      else if (action === 'set-theme') {
+        applyTheme(ds.themeId);
+        saveConfig();
+        render();
+      }
       else if (action === 'manual-sync') {
         const idInput = document.getElementById('client-id-input');
         if (idInput) {
@@ -1384,7 +2209,6 @@ function attachViewHandlers() {
     idInput.addEventListener('change', e => {
       config.clientId = e.target.value.trim();
       saveConfig();
-      // reset auth state
       accessToken = null;
       tokenClient = null;
       gapiReady = false;
@@ -1474,7 +2298,6 @@ function showAddModal() {
   document.querySelectorAll('[data-cat]').forEach(b => {
     b.addEventListener('click', e => {
       selectedCat = e.currentTarget.dataset.cat;
-      // Toggle selected class on category buttons only — leave inputs untouched.
       document.querySelectorAll('.cat-pick-btn').forEach(btn => {
         btn.classList.toggle('selected', btn.dataset.cat === selectedCat);
       });
@@ -1498,6 +2321,7 @@ function showAddModal() {
 // ============================================================
 function init() {
   loadLocal();
+  applyTheme(config.theme || 'matcha');
   initMonthPicker();
   document.querySelectorAll('.tab').forEach(t => {
     t.addEventListener('click', () => {
@@ -1517,7 +2341,6 @@ function init() {
 
   render();
 
-  // Try silent sync after a moment if configured
   if (config.clientId) {
     setTimeout(() => sync(), 1000);
   }
