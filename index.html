@@ -572,6 +572,7 @@
     align-items: center; border-bottom: 1px solid var(--border);
   }
   .plan-row:last-child { border-bottom: none; }
+  .drag-list > .plan-row:last-child { border-bottom: none; }
   .plan-input {
     background: var(--bg-elevated); border: 1px solid var(--border);
     border-radius: 6px; padding: 6px 10px; color: var(--text);
@@ -884,6 +885,136 @@
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   .toast.error { border-color: var(--danger); color: var(--danger); }
   .toast.success { border-color: var(--good); color: var(--good); }
+
+  /* ============================================================
+     COLLAPSIBLE SECTIONS (Plan tab)
+     ============================================================ */
+  .section-toggle {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-dim); padding: 4px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 6px; margin-right: 4px;
+    transition: transform 0.2s, color 0.15s, background 0.15s;
+    transform-origin: center;
+  }
+  .section-toggle:hover { color: var(--text); background: var(--bg); }
+  .section-toggle.collapsed { transform: rotate(-90deg); }
+  .section-toggle svg { display: block; }
+  .plan-section-head-left {
+    display: flex; align-items: center;
+    flex: 1; min-width: 0;
+  }
+  .plan-section-head-left .plan-section-title { margin-left: 2px; }
+  .income-card-head-left {
+    display: flex; align-items: center;
+    flex: 1; min-width: 0;
+  }
+  .income-card-head-left .income-card-title { margin-left: 2px; }
+  .section-body {
+    overflow: hidden;
+    max-height: 9999px;
+    transition: max-height 0.25s ease;
+  }
+  .section-body.collapsed {
+    max-height: 0;
+  }
+
+  /* ============================================================
+     DRAG TO REORDER
+     ============================================================ */
+  .plan-row,
+  .income-source,
+  .income-source-meta {
+    transition: background 0.15s, transform 0.15s, opacity 0.15s;
+  }
+  .drag-handle {
+    cursor: grab;
+    color: var(--text-faint);
+    padding: 6px 4px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 4px;
+    user-select: none; -webkit-user-select: none;
+    touch-action: none;
+    transition: color 0.15s, background 0.15s;
+    line-height: 1;
+    font-size: 14px;
+  }
+  .drag-handle:hover { color: var(--text-dim); background: var(--bg); }
+  .drag-handle:active { cursor: grabbing; }
+
+  /* The plan-row grid needs a new column for the drag handle */
+  .plan-row {
+    grid-template-columns: auto 1fr 110px 32px;
+  }
+
+  /* Pair an income-source + its meta row together as a draggable unit */
+  .income-source-wrapper {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s, transform 0.15s, opacity 0.15s, box-shadow 0.2s;
+    position: relative;
+  }
+  .drag-list > .income-source-wrapper:last-child { border-bottom: none; }
+  .income-source-wrapper .income-source { padding-top: 14px; padding-bottom: 6px; }
+  .income-source-wrapper .income-source-meta { border-bottom: none; }
+
+  /* Add a drag handle slot inside the income-source row */
+  .income-source { padding-left: 6px; }
+  @media (min-width: 721px) {
+    .income-source {
+      grid-template-columns: auto 1fr 130px 130px auto;
+    }
+  }
+  @media (max-width: 720px) {
+    .income-source {
+      grid-template-columns: auto 1fr 1fr auto;
+    }
+    .income-source .src-drag {
+      grid-column: 1 / 2;
+      grid-row: 1 / 3;
+      align-self: center;
+    }
+    .income-source .src-name {
+      grid-column: 2 / 4;
+      grid-row: 1;
+    }
+    .income-source .src-delete {
+      grid-column: 4 / 5;
+      grid-row: 1;
+    }
+    .income-source .src-freq {
+      grid-column: 2 / 3;
+      grid-row: 2;
+    }
+    .income-source .src-amount {
+      grid-column: 3 / 5;
+      grid-row: 2;
+    }
+  }
+
+  /* Drag states */
+  .drag-pressing {
+    background: var(--bg-elevated) !important;
+  }
+  .drag-lifted {
+    position: relative;
+    z-index: 50;
+    background: var(--bg-elevated) !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    opacity: 0.96;
+    cursor: grabbing;
+  }
+  .drag-ghost {
+    opacity: 0.25;
+    pointer-events: none;
+  }
+  .drop-indicator {
+    height: 2px;
+    background: var(--accent);
+    margin: 0 18px;
+    border-radius: 1px;
+    box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.5);
+    pointer-events: none;
+  }
 </style>
 </head>
 <body>
@@ -932,7 +1063,7 @@
   <div id="view"></div>
 
   <div class="app-footer">
-    Budget Ledger · <span class="version" id="version-label">v3.1.2</span>
+    Budget Ledger · <span class="version" id="version-label">v3.2.4</span>
   </div>
 </div>
 
@@ -944,7 +1075,7 @@
 // ============================================================
 //  APP VERSION
 // ============================================================
-const APP_VERSION = '3.1.2';
+const APP_VERSION = '3.2.4';
 
 // ============================================================
 //  STATE & DEFAULTS
@@ -1215,7 +1346,7 @@ function migrateState() {
   Object.values(state.plans).forEach(ensurePlanShape);
 }
 
-let config = { clientId: '', theme: 'matcha' };
+let config = { clientId: '', theme: 'matcha', collapsedSections: {} };
 let activeMonth = currentMonthKey();
 let activeTab = 'dashboard';
 let driveFileId = null;
@@ -1322,6 +1453,9 @@ function toast(msg, kind = '') {
 //  THEME
 // ============================================================
 function applyTheme(themeId) {
+  // Migrate renamed theme IDs (v3.2.2 → v3.2.3): ember→warm, plum→pink
+  const idMap = { ember: 'warm', plum: 'pink' };
+  if (idMap[themeId]) themeId = idMap[themeId];
   const valid = AVAILABLE_THEMES.find(t => t.id === themeId);
   const id = valid ? themeId : 'matcha';
   document.documentElement.setAttribute('data-theme', id);
@@ -1443,7 +1577,10 @@ function loadLocal() {
     const raw = localStorage.getItem(CONFIG_KEY);
     if (raw) {
       const loaded = JSON.parse(raw);
-      config = { clientId: '', theme: 'matcha', ...loaded };
+      config = { clientId: '', theme: 'matcha', collapsedSections: {}, ...loaded };
+      if (!config.collapsedSections || typeof config.collapsedSections !== 'object') {
+        config.collapsedSections = {};
+      }
     }
   } catch {}
   migrateState();
@@ -1764,6 +1901,12 @@ function removeIncomeSource(id) {
   render();
   debouncedSync();
 }
+function toggleSection(key) {
+  config.collapsedSections[key] = !config.collapsedSections[key];
+  saveConfig();
+  render();
+}
+
 function updateTaxConfig(field, value) {
   const tax = currentPlan().income.tax;
   if (field === 'localRate') tax.localRate = parseFloat(value) || 0;
@@ -1778,9 +1921,321 @@ function updateTaxConfig(field, value) {
 }
 
 // ============================================================
+//  DRAG TO REORDER
+// ============================================================
+// Pointer-event-based reorder. On touch devices a long-press
+// initiates the drag so single taps and scrolls still work. On mouse,
+// drag starts immediately on pointerdown. The lifted row is moved to
+// document.body so that re-renders of the view (e.g. from a Drive sync
+// completing mid-drag) can't tear it out of the DOM.
+
+const DRAG = {
+  active: false,
+  pressing: false,
+  startX: 0, startY: 0,
+  pointerId: null,
+  handleEl: null,
+  rowEl: null,           // the lifted clone (moved to body)
+  originalRowEl: null,   // the original row (now hidden in place as placeholder)
+  list: null,
+  groupKey: null,
+  dragId: null,
+  rowRect: null,
+  offsetX: 0,
+  offsetY: 0,
+  pressTimer: null,
+  targetIndex: -1,
+  isTouch: false,
+  cancelled: false,
+};
+
+// One persistent indicator lives in body the whole session. Hidden by default.
+let DRAG_INDICATOR_EL = null;
+function ensureDragIndicator() {
+  if (DRAG_INDICATOR_EL && DRAG_INDICATOR_EL.isConnected) return DRAG_INDICATOR_EL;
+  DRAG_INDICATOR_EL = document.createElement('div');
+  DRAG_INDICATOR_EL.className = 'drop-indicator';
+  DRAG_INDICATOR_EL.style.display = 'none';
+  DRAG_INDICATOR_EL.style.position = 'fixed';
+  DRAG_INDICATOR_EL.style.pointerEvents = 'none';
+  DRAG_INDICATOR_EL.style.zIndex = '60';
+  document.body.appendChild(DRAG_INDICATOR_EL);
+  return DRAG_INDICATOR_EL;
+}
+function hideDragIndicator() {
+  if (DRAG_INDICATOR_EL) DRAG_INDICATOR_EL.style.display = 'none';
+}
+
+// Returns the currently-rendered original rows in a drag list (excludes
+// any lifted clone living in body).
+function dragRowsInList(list) {
+  if (!list || !list.isConnected) return [];
+  return [...list.querySelectorAll(':scope > [data-drag-id]:not([data-drag-clone])')];
+}
+
+function isDragActive() {
+  return DRAG.active || DRAG.pressing;
+}
+
+function attachDragHandlers() {
+  document.querySelectorAll('[data-drag-handle]').forEach(handle => {
+    handle.addEventListener('pointerdown', onDragPointerDown);
+  });
+}
+
+function onDragPointerDown(e) {
+  if (e.button !== undefined && e.button !== 0) return;
+  // If a previous drag somehow didn't clean up, force-reset now.
+  if (DRAG.active || DRAG.pressing) hardResetDrag();
+
+  const handle = e.currentTarget;
+  const row = handle.closest('[data-drag-id]');
+  if (!row) return;
+  const list = row.parentElement;
+  if (!list || !list.classList.contains('drag-list')) return;
+
+  DRAG.handleEl = handle;
+  DRAG.originalRowEl = row;
+  DRAG.list = list;
+  DRAG.groupKey = row.dataset.dragKey;
+  DRAG.dragId = row.dataset.dragId;
+  DRAG.startX = e.clientX;
+  DRAG.startY = e.clientY;
+  DRAG.pointerId = e.pointerId;
+  DRAG.isTouch = e.pointerType === 'touch';
+  DRAG.pressing = true;
+  DRAG.active = false;
+  DRAG.cancelled = false;
+  DRAG.targetIndex = -1;
+
+  row.classList.add('drag-pressing');
+
+  // Listen on window so we never miss a pointerup, even if the user
+  // releases outside the handle. Avoid pointer capture — pointer
+  // capture is lost when the captured element's parent re-renders,
+  // which has been a source of stuck drags.
+  window.addEventListener('pointermove', onDragPointerMove, { passive: false });
+  window.addEventListener('pointerup', onDragPointerUp, true);
+  window.addEventListener('pointercancel', onDragPointerCancel, true);
+
+  const initiateDelay = DRAG.isTouch ? 350 : 0;
+  DRAG.pressTimer = setTimeout(() => {
+    if (DRAG.pressing && !DRAG.cancelled) startDragging(e);
+  }, initiateDelay);
+}
+
+function startDragging(e) {
+  if (!DRAG.originalRowEl || !DRAG.originalRowEl.isConnected) {
+    hardResetDrag();
+    return;
+  }
+  DRAG.active = true;
+  const rect = DRAG.originalRowEl.getBoundingClientRect();
+  DRAG.rowRect = rect;
+  DRAG.offsetX = DRAG.startX - rect.left;
+  DRAG.offsetY = DRAG.startY - rect.top;
+
+  // Clone the row and lift the clone into document.body so a mid-drag
+  // re-render (sync, etc.) can't destroy it.
+  const clone = DRAG.originalRowEl.cloneNode(true);
+  clone.setAttribute('data-drag-clone', '1');
+  clone.classList.remove('drag-pressing');
+  clone.classList.add('drag-lifted');
+  clone.style.position = 'fixed';
+  clone.style.top = rect.top + 'px';
+  clone.style.left = rect.left + 'px';
+  clone.style.width = rect.width + 'px';
+  clone.style.margin = '0';
+  clone.style.pointerEvents = 'none';
+  clone.style.zIndex = '70';
+  // Disable form-control interactivity in the clone.
+  clone.querySelectorAll('input, select, button, textarea').forEach(el => {
+    el.disabled = true;
+    el.tabIndex = -1;
+  });
+  document.body.appendChild(clone);
+  DRAG.rowEl = clone;
+
+  // Hide the original in place so its slot is preserved.
+  DRAG.originalRowEl.classList.remove('drag-pressing');
+  DRAG.originalRowEl.classList.add('drag-ghost');
+
+  ensureDragIndicator();
+
+  if (DRAG.isTouch && navigator.vibrate) navigator.vibrate(15);
+
+  updateDropTarget(e.clientY);
+}
+
+function onDragPointerMove(e) {
+  if (!DRAG.pressing) return;
+
+  if (!DRAG.active) {
+    const dx = Math.abs(e.clientX - DRAG.startX);
+    const dy = Math.abs(e.clientY - DRAG.startY);
+    if (dx > 8 || dy > 8) {
+      // User moved before long-press fired — treat as scroll, cancel.
+      DRAG.cancelled = true;
+      clearTimeout(DRAG.pressTimer);
+      DRAG.pressTimer = null;
+      if (DRAG.originalRowEl) DRAG.originalRowEl.classList.remove('drag-pressing');
+      finishDrag(false);
+    }
+    return;
+  }
+
+  e.preventDefault();
+  if (DRAG.rowEl) {
+    DRAG.rowEl.style.top = (e.clientY - DRAG.offsetY) + 'px';
+    DRAG.rowEl.style.left = (e.clientX - DRAG.offsetX) + 'px';
+  }
+  updateDropTarget(e.clientY);
+
+  const edge = 60;
+  if (e.clientY < edge) window.scrollBy(0, -8);
+  else if (e.clientY > window.innerHeight - edge) window.scrollBy(0, 8);
+}
+
+function updateDropTarget(clientY) {
+  if (!DRAG.list || !DRAG.list.isConnected) { hideDragIndicator(); return; }
+  const rows = dragRowsInList(DRAG.list).filter(r => r !== DRAG.originalRowEl);
+  if (rows.length === 0) {
+    DRAG.targetIndex = 0;
+    hideDragIndicator();
+    return;
+  }
+
+  let bestIndex = -1;
+  let bestPosition = 'before';
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i].getBoundingClientRect();
+    const midY = r.top + r.height / 2;
+    if (clientY < midY) {
+      bestIndex = i;
+      bestPosition = 'before';
+      break;
+    }
+    if (i === rows.length - 1) {
+      bestIndex = i;
+      bestPosition = 'after';
+    }
+  }
+  if (bestIndex === -1) { bestIndex = 0; bestPosition = 'before'; }
+
+  const refRect = rows[bestIndex].getBoundingClientRect();
+  const ind = ensureDragIndicator();
+  ind.style.display = 'block';
+  ind.style.left = refRect.left + 'px';
+  ind.style.width = refRect.width + 'px';
+  ind.style.top = (bestPosition === 'before' ? refRect.top - 1 : refRect.bottom - 1) + 'px';
+
+  // Compute final index in the underlying data array.
+  const fullRows = dragRowsInList(DRAG.list);
+  const draggedOriginalIdx = fullRows.indexOf(DRAG.originalRowEl);
+  const targetOriginalIdx = fullRows.indexOf(rows[bestIndex]);
+  let finalIdx = bestPosition === 'before' ? targetOriginalIdx : targetOriginalIdx + 1;
+  if (draggedOriginalIdx >= 0 && draggedOriginalIdx < targetOriginalIdx) finalIdx -= 1;
+  DRAG.targetIndex = finalIdx;
+}
+
+function onDragPointerUp(e) {
+  if (!DRAG.pressing) return;
+  clearTimeout(DRAG.pressTimer);
+  DRAG.pressTimer = null;
+
+  const shouldCommit = DRAG.active && !DRAG.cancelled && DRAG.targetIndex >= 0;
+  finishDrag(shouldCommit);
+}
+
+function onDragPointerCancel(e) {
+  if (!DRAG.pressing) return;
+  clearTimeout(DRAG.pressTimer);
+  DRAG.pressTimer = null;
+  finishDrag(false);
+}
+
+function finishDrag(commit) {
+  const groupKey = DRAG.groupKey;
+  const dragId = DRAG.dragId;
+  const targetIndex = DRAG.targetIndex;
+
+  // Tear down DOM and listeners first so the subsequent render() starts
+  // from a clean slate.
+  hardResetDrag();
+
+  if (commit) commitReorder(groupKey, dragId, targetIndex);
+}
+
+// Synchronously remove every trace of a drag from the DOM and reset state.
+// Safe to call at any time, even if no drag is active.
+function hardResetDrag() {
+  clearTimeout(DRAG.pressTimer);
+  DRAG.pressTimer = null;
+
+  window.removeEventListener('pointermove', onDragPointerMove, { passive: false });
+  window.removeEventListener('pointerup', onDragPointerUp, true);
+  window.removeEventListener('pointercancel', onDragPointerCancel, true);
+
+  // Remove any lifted clone(s). Use a query in case multiple ever leaked.
+  document.querySelectorAll('[data-drag-clone]').forEach(el => el.remove());
+
+  // Restore the original row's visual state.
+  if (DRAG.originalRowEl) {
+    DRAG.originalRowEl.classList.remove('drag-pressing', 'drag-ghost');
+  }
+  // Belt and suspenders: any row in the document that still has these
+  // classes (e.g. survived a re-render with stale state) gets cleaned up.
+  document.querySelectorAll('.drag-pressing, .drag-ghost').forEach(el => {
+    el.classList.remove('drag-pressing', 'drag-ghost');
+  });
+
+  hideDragIndicator();
+
+  DRAG.active = false;
+  DRAG.pressing = false;
+  DRAG.cancelled = false;
+  DRAG.handleEl = null;
+  DRAG.rowEl = null;
+  DRAG.originalRowEl = null;
+  DRAG.list = null;
+  DRAG.groupKey = null;
+  DRAG.dragId = null;
+  DRAG.pointerId = null;
+  DRAG.targetIndex = -1;
+}
+
+function commitReorder(groupKey, id, targetIndex) {
+  if (targetIndex < 0) return;
+  const plan = currentPlan();
+  let arr;
+  if (groupKey === 'income') arr = plan.income.sources;
+  else arr = plan[groupKey];
+  if (!arr) return;
+  const fromIdx = arr.findIndex(x => x.id === id);
+  if (fromIdx < 0) return;
+  const [item] = arr.splice(fromIdx, 1);
+  const clamped = Math.max(0, Math.min(targetIndex, arr.length));
+  if (clamped === fromIdx) {
+    // No actual change — re-insert in place; skip save+sync.
+    arr.splice(fromIdx, 0, item);
+    return;
+  }
+  arr.splice(clamped, 0, item);
+  saveLocal();
+  render();
+  debouncedSync();
+}
+
+// ============================================================
 //  VIEWS
 // ============================================================
 function render() {
+  // If a re-render happens while a drag is in flight (e.g. a Drive sync
+  // completed mid-drag, or some other state mutation triggered render),
+  // tear the drag down first so we never leave orphaned DOM behind.
+  if (typeof hardResetDrag === 'function' && (DRAG.active || DRAG.pressing)) {
+    hardResetDrag();
+  }
   document.getElementById('month-label').textContent = 'Personal · ' + monthLabel(activeMonth);
   updateMonthTrigger();
   document.querySelectorAll('.tab').forEach(t => {
@@ -1918,31 +2373,35 @@ function renderIncomeSection() {
   const plan = currentPlan();
   const inc = computeIncome(plan.income);
   const tax = plan.income.tax;
+  const collapsed = !!config.collapsedSections.income;
 
   const sourceRows = inc.sources.map(s => `
-    <div class="income-source" data-src-id="${s.id}">
-      <input class="plan-input name-input src-name" type="text"
-             value="${escapeHtml(s.name)}"
-             data-src-id="${s.id}" data-field="name"
-             placeholder="Source name" />
-      <input class="plan-input src-amount" type="number" step="0.01" inputmode="decimal"
-             value="${s.gross || 0}"
-             data-src-id="${s.id}" data-field="gross"
-             placeholder="Amount" />
-      <select class="plan-input src-freq"
-              data-src-id="${s.id}" data-field="frequency">
-        ${PAY_FREQUENCIES.map(f => `<option value="${f.id}" ${s.frequency === f.id ? 'selected' : ''}>${f.label}</option>`).join('')}
-      </select>
-      <button class="src-delete-btn src-delete" data-action="remove-source" data-src-id="${s.id}" aria-label="Remove source">×</button>
-    </div>
-    <div class="income-source-meta">
-      <label class="source-toggle">
-        <input type="checkbox" data-src-id="${s.id}" data-field="applyTax" ${s.applyTax ? 'checked' : ''} />
-        <span>Apply tax withholding</span>
-      </label>
-      <span>Monthly gross: <strong style="color:var(--text);">$${fmt(s.monthlyGross, 2)}</strong></span>
-      ${s.applyTax ? `<span>Tax: $${fmt(s.taxMonthly, 2)}</span>` : '<span style="color:var(--good);">No tax</span>'}
-      <span class="source-net">Net: $${fmt(s.netMonthly, 2)}</span>
+    <div class="income-source-wrapper" data-drag-key="income" data-drag-id="${s.id}">
+      <div class="income-source" data-src-id="${s.id}">
+        <span class="drag-handle src-drag" data-drag-handle aria-label="Drag to reorder" title="Drag to reorder">⋮⋮</span>
+        <input class="plan-input name-input src-name" type="text"
+               value="${escapeHtml(s.name)}"
+               data-src-id="${s.id}" data-field="name"
+               placeholder="Source name" />
+        <input class="plan-input src-amount" type="number" step="0.01" inputmode="decimal"
+               value="${s.gross || 0}"
+               data-src-id="${s.id}" data-field="gross"
+               placeholder="Amount" />
+        <select class="plan-input src-freq"
+                data-src-id="${s.id}" data-field="frequency">
+          ${PAY_FREQUENCIES.map(f => `<option value="${f.id}" ${s.frequency === f.id ? 'selected' : ''}>${f.label}</option>`).join('')}
+        </select>
+        <button class="src-delete-btn src-delete" data-action="remove-source" data-src-id="${s.id}" aria-label="Remove source">×</button>
+      </div>
+      <div class="income-source-meta">
+        <label class="source-toggle">
+          <input type="checkbox" data-src-id="${s.id}" data-field="applyTax" ${s.applyTax ? 'checked' : ''} />
+          <span>Apply tax withholding</span>
+        </label>
+        <span>Monthly gross: <strong style="color:var(--text);">$${fmt(s.monthlyGross, 2)}</strong></span>
+        ${s.applyTax ? `<span>Tax: $${fmt(s.taxMonthly, 2)}</span>` : '<span style="color:var(--good);">No tax</span>'}
+        <span class="source-net">Net: $${fmt(s.netMonthly, 2)}</span>
+      </div>
     </div>
   `).join('');
 
@@ -1965,62 +2424,71 @@ function renderIncomeSection() {
   return `
     <div class="income-card">
       <div class="income-card-head">
-        <span class="income-card-title">Income</span>
+        <div class="income-card-head-left">
+          <button class="section-toggle ${collapsed ? 'collapsed' : ''}" data-action="toggle-section" data-section-key="income" aria-label="Toggle income section" aria-expanded="${!collapsed}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <span class="income-card-title">Income</span>
+        </div>
         <span class="income-card-total">$${fmt(inc.takeHomeMonthly, 2)} / mo take-home</span>
       </div>
 
-      ${inc.sources.length === 0 ? `
-        <div style="padding: 24px 18px; text-align: center; color: var(--text-faint); font-size: 13px;">
-          <div style="font-family: var(--display-font); font-style: italic; font-size: 18px; color: var(--text-dim); margin-bottom: 6px;">No income sources yet</div>
-          <div>Add your paycheck, side gigs, or any other income below.</div>
-        </div>
-      ` : sourceRows}
+      <div class="section-body ${collapsed ? 'collapsed' : ''}">
+        ${inc.sources.length === 0 ? `
+          <div style="padding: 24px 18px; text-align: center; color: var(--text-faint); font-size: 13px;">
+            <div style="font-family: var(--display-font); font-style: italic; font-size: 18px; color: var(--text-dim); margin-bottom: 6px;">No income sources yet</div>
+            <div>Add your paycheck, side gigs, or any other income below.</div>
+          </div>
+        ` : `<div class="drag-list" data-drag-key="income">${sourceRows}</div>`}
 
-      <button class="plan-row-add" data-action="add-source">
-        <span class="plan-row-add-icon">+</span>
-        <span>Add income source</span>
-      </button>
+        <button class="plan-row-add" data-action="add-source">
+          <span class="plan-row-add-icon">+</span>
+          <span>Add income source</span>
+        </button>
 
-      <div class="tax-config">
-        <div class="tax-config-group">
-          <label>Filing status</label>
-          <select data-tax-field="filingStatus">
-            ${FILING_STATUSES.map(f => `<option value="${f.id}" ${tax.filingStatus === f.id ? 'selected' : ''}>${f.label}</option>`).join('')}
-          </select>
+        <div class="tax-config">
+          <div class="tax-config-group">
+            <label>Filing status</label>
+            <select data-tax-field="filingStatus">
+              ${FILING_STATUSES.map(f => `<option value="${f.id}" ${tax.filingStatus === f.id ? 'selected' : ''}>${f.label}</option>`).join('')}
+            </select>
+          </div>
+          <div class="tax-config-group">
+            <label>State</label>
+            <select data-tax-field="state">
+              ${Object.entries(STATE_TAX).map(([code, info]) => `<option value="${code}" ${tax.state === code ? 'selected' : ''}>${info.name} (${(info.rate * 100).toFixed(2)}%)</option>`).join('')}
+            </select>
+          </div>
+          <div class="tax-config-group">
+            <label>Local tax rate (%)</label>
+            <input type="number" step="0.01" min="0" data-tax-field="localRate"
+                   value="${tax.localRate}" placeholder="0" />
+          </div>
+          <div class="tax-config-group">
+            <label>Manual take-home override (monthly)</label>
+            <input type="number" step="0.01" min="0" data-tax-field="manualOverride"
+                   value="${tax.manualOverride !== null && tax.manualOverride !== undefined ? tax.manualOverride : ''}"
+                   placeholder="Leave blank to use estimate" />
+          </div>
         </div>
-        <div class="tax-config-group">
-          <label>State</label>
-          <select data-tax-field="state">
-            ${Object.entries(STATE_TAX).map(([code, info]) => `<option value="${code}" ${tax.state === code ? 'selected' : ''}>${info.name} (${(info.rate * 100).toFixed(2)}%)</option>`).join('')}
-          </select>
-        </div>
-        <div class="tax-config-group">
-          <label>Local tax rate (%)</label>
-          <input type="number" step="0.01" min="0" data-tax-field="localRate"
-                 value="${tax.localRate}" placeholder="0" />
-        </div>
-        <div class="tax-config-group">
-          <label>Manual take-home override (monthly)</label>
-          <input type="number" step="0.01" min="0" data-tax-field="manualOverride"
-                 value="${tax.manualOverride !== null && tax.manualOverride !== undefined ? tax.manualOverride : ''}"
-                 placeholder="Leave blank to use estimate" />
-        </div>
-      </div>
 
-      ${taxBreakdown}
+        ${taxBreakdown}
 
-      <div class="income-summary">
-        <div class="income-summary-item">
-          <span class="income-summary-label">Gross monthly</span>
-          <span class="income-summary-value">$${fmt(inc.grossMonthly, 2)}</span>
-        </div>
-        <div class="income-summary-item">
-          <span class="income-summary-label">Total tax</span>
-          <span class="income-summary-value">$${fmt(inc.totalTaxMonthly, 2)}</span>
-        </div>
-        <div class="income-summary-item">
-          <span class="income-summary-label">Take-home</span>
-          <span class="income-summary-value takehome">$${fmt(inc.takeHomeMonthly, 2)}</span>
+        <div class="income-summary">
+          <div class="income-summary-item">
+            <span class="income-summary-label">Gross monthly</span>
+            <span class="income-summary-value">$${fmt(inc.grossMonthly, 2)}</span>
+          </div>
+          <div class="income-summary-item">
+            <span class="income-summary-label">Total tax</span>
+            <span class="income-summary-value">$${fmt(inc.totalTaxMonthly, 2)}</span>
+          </div>
+          <div class="income-summary-item">
+            <span class="income-summary-label">Take-home</span>
+            <span class="income-summary-value takehome">$${fmt(inc.takeHomeMonthly, 2)}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -2030,25 +2498,40 @@ function renderIncomeSection() {
 function renderPlan() {
   const sum = (items) => items.reduce((a, c) => a + c.planned, 0);
   const isPast = activeMonth < currentMonthKey();
-  const section = (key, label) => `
+  const section = (key, label) => {
+    const collapsed = !!config.collapsedSections[key];
+    return `
     <div class="plan-section">
       <div class="plan-section-head">
-        <span class="plan-section-title">${label}</span>
+        <div class="plan-section-head-left">
+          <button class="section-toggle ${collapsed ? 'collapsed' : ''}" data-action="toggle-section" data-section-key="${key}" aria-label="Toggle ${label} section" aria-expanded="${!collapsed}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <span class="plan-section-title">${label}</span>
+        </div>
         <span class="plan-section-total">$${fmt(sum(currentPlan()[key]))} / mo</span>
       </div>
-      ${currentPlan()[key].map(item => `
-        <div class="plan-row">
-          <input class="plan-input name-input" value="${escapeHtml(item.name)}" data-group="${key}" data-id="${item.id}" data-field="name" />
-          <input class="plan-input" type="number" value="${item.planned}" data-group="${key}" data-id="${item.id}" data-field="planned" />
-          <button class="plan-row-delete" data-action="remove-category" data-group="${key}" data-id="${item.id}" aria-label="Remove ${escapeHtml(item.name)}" title="Remove">×</button>
+      <div class="section-body ${collapsed ? 'collapsed' : ''}">
+        <div class="drag-list" data-drag-key="${key}">
+          ${currentPlan()[key].map(item => `
+            <div class="plan-row" data-drag-key="${key}" data-drag-id="${item.id}">
+              <span class="drag-handle" data-drag-handle aria-label="Drag to reorder" title="Drag to reorder">⋮⋮</span>
+              <input class="plan-input name-input" value="${escapeHtml(item.name)}" data-group="${key}" data-id="${item.id}" data-field="name" />
+              <input class="plan-input" type="number" value="${item.planned}" data-group="${key}" data-id="${item.id}" data-field="planned" />
+              <button class="plan-row-delete" data-action="remove-category" data-group="${key}" data-id="${item.id}" aria-label="Remove ${escapeHtml(item.name)}" title="Remove">×</button>
+            </div>
+          `).join('')}
         </div>
-      `).join('')}
-      <button class="plan-row-add" data-action="add-category" data-group="${key}">
-        <span class="plan-row-add-icon">+</span>
-        <span>Add ${label.toLowerCase()} category</span>
-      </button>
+        <button class="plan-row-add" data-action="add-category" data-group="${key}">
+          <span class="plan-row-add-icon">+</span>
+          <span>Add ${label.toLowerCase()} category</span>
+        </button>
+      </div>
     </div>
   `;
+  };
   const banner = isPast ? `
     <div class="plan-banner past">
       <div class="plan-banner-icon">⏱</div>
@@ -2163,6 +2646,7 @@ function renderSettings() {
 //  HANDLERS
 // ============================================================
 function attachViewHandlers() {
+  attachDragHandlers();
   // Plan inputs
   document.querySelectorAll('.plan-input').forEach(input => {
     if (input.dataset.srcId || input.dataset.taxField) return; // handled separately
@@ -2201,6 +2685,7 @@ function attachViewHandlers() {
       else if (action === 'remove-category') removeCategory(ds.group, ds.id);
       else if (action === 'add-source') addIncomeSource();
       else if (action === 'remove-source') removeIncomeSource(ds.srcId);
+      else if (action === 'toggle-section') toggleSection(ds.sectionKey);
       else if (action === 'set-theme') {
         applyTheme(ds.themeId);
         saveConfig();
