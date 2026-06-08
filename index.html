@@ -173,6 +173,7 @@
 
   body {
     min-height: 100vh;
+    overflow-x: hidden;
     background: var(--bg);
     color: var(--text);
     font-family: var(--body-font);
@@ -324,6 +325,19 @@
   @media (max-width: 720px) {
     .dashboard-top { grid-template-columns: 1fr; }
     .header-title { font-size: 32px; }
+    /* Tighten the tabs just enough that all four fit on one line — no scrolling */
+    .tab {
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+  }
+  /* Smallest phones (e.g. iPhone SE ~320px): tighten a touch more so all
+     four tabs still fit on one line without scrolling or overflowing. */
+  @media (max-width: 360px) {
+    .tab {
+      padding: 10px 8px;
+      font-size: 11px;
+    }
   }
 
   .hero-card {
@@ -1015,6 +1029,156 @@
     box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.5);
     pointer-events: none;
   }
+
+  /* ============================================================
+     ASSETS / NET WORTH
+     ============================================================ */
+  .assets-intro { margin-top: 8px; }
+  .assets-empty-btn { max-width: 320px; margin: 20px auto 0; }
+
+  .assets-hero {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 24px; margin-bottom: 16px;
+    display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: center;
+    position: relative; overflow: hidden;
+  }
+  .assets-hero::before {
+    content: ''; position: absolute; top: -40%; right: -10%;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(var(--accent-rgb), 0.10) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  @media (max-width: 720px) {
+    .assets-hero { grid-template-columns: 1fr; gap: 18px; }
+  }
+  .assets-net {
+    font-family: var(--mono-font); font-size: 44px; font-weight: 600;
+    letter-spacing: -0.01em; margin: 6px 0; line-height: 1;
+  }
+  .assets-net.negative { color: var(--danger); }
+  .assets-delta { font-family: var(--mono-font); font-size: 13px; }
+  .assets-delta.pos { color: var(--good); }
+  .assets-delta.neg { color: var(--danger); }
+  .assets-delta.muted { color: var(--text-faint); }
+  .assets-hero-side { display: flex; flex-direction: column; gap: 2px; }
+  .assets-stat {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .assets-stat:last-child { border-bottom: none; }
+  .assets-stat-label { font-size: 13px; color: var(--text-dim); }
+  .assets-stat-value { font-family: var(--mono-font); font-size: 15px; font-weight: 500; }
+  .assets-stat-value.pos { color: var(--good); }
+  .assets-stat-value.neg { color: var(--danger); }
+
+  .assets-chart-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 20px 20px 12px; margin-bottom: 28px;
+  }
+  .assets-chart-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 12px;
+  }
+  .assets-chart { width: 100%; height: auto; display: block; }
+  .chart-grid { stroke: var(--border); stroke-width: 1; }
+  .chart-zero { stroke: var(--border-bright); stroke-width: 1; stroke-dasharray: 3 3; }
+  .chart-axis-label {
+    fill: var(--text-faint); font-family: var(--mono-font); font-size: 10px;
+  }
+  .chart-area { fill: rgba(var(--accent-rgb), 0.10); stroke: none; }
+  .chart-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .chart-line-net { stroke: var(--accent); stroke-width: 2.5; }
+  .chart-line-assets { stroke: var(--good); stroke-width: 1.5; opacity: 0.65; stroke-dasharray: 4 3; }
+  .chart-line-liab { stroke: var(--danger); stroke-width: 1.5; opacity: 0.65; stroke-dasharray: 4 3; }
+  .chart-dot { fill: var(--accent); stroke: var(--bg-card); stroke-width: 1.5; }
+  .chart-legend {
+    display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;
+    margin-top: 8px; padding-top: 10px;
+  }
+  .chart-legend-item {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--mono-font); font-size: 11px; color: var(--text-dim);
+  }
+  .chart-legend-swatch { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+  .chart-legend-swatch.sw-net { background: var(--accent); height: 4px; }
+  .chart-legend-swatch.sw-assets { background: var(--good); }
+  .chart-legend-swatch.sw-liab { background: var(--danger); }
+  .chart-hint, .snap-empty {
+    color: var(--text-faint); font-size: 13px; text-align: center; padding: 24px 8px;
+  }
+
+  .assets-list-header { margin-top: 4px; align-items: center; }
+  .assets-list-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .snap-toggle { flex-shrink: 0; }
+  .snap-body { border-bottom: none; }
+  /* When collapsed, the foot sits directly under the header — keep one clean divider */
+  .snap-body.collapsed + .snap-foot { border-top: none; }
+  .snap-list { display: flex; flex-direction: column; gap: 14px; }
+  .snap-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden;
+  }
+  .snap-head {
+    padding: 14px 18px; background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; flex-wrap: wrap;
+  }
+  .snap-head-left { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .snap-date-input, .snap-label-input {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 10px; color: var(--text);
+    font-family: var(--mono-font); font-size: 13px; outline: none; color-scheme: dark;
+  }
+  [data-theme="daylight"] .snap-date-input,
+  [data-theme="daylight"] .snap-label-input { color-scheme: light; }
+  .snap-label-input { font-family: var(--body-font); min-width: 140px; }
+  .snap-date-input:focus, .snap-label-input:focus { border-color: var(--accent); }
+  .snap-head-right { display: flex; align-items: center; gap: 12px; }
+  .snap-net { font-family: var(--mono-font); font-size: 18px; font-weight: 600; color: var(--accent); }
+  .snap-net.negative { color: var(--danger); }
+  .snap-delete {
+    background: none; border: none; color: var(--text-faint); cursor: pointer;
+    font-size: 15px; padding: 4px 6px; border-radius: 6px; line-height: 1;
+  }
+  .snap-delete:hover { color: var(--danger); background: rgba(255, 94, 94, 0.08); }
+
+  .snap-entries { padding: 8px 18px; }
+  .entry-row {
+    display: grid; grid-template-columns: 1fr 130px 130px 32px;
+    gap: 10px; align-items: center; padding: 6px 0;
+  }
+  .entry-row-head {
+    font-family: var(--mono-font); font-size: 9px; color: var(--text-faint);
+    text-transform: uppercase; letter-spacing: 0.12em; padding-bottom: 2px;
+  }
+  .entry-amount.is-liab { color: var(--danger); }
+  .entry-amount.is-asset { color: var(--good); }
+  @media (max-width: 720px) {
+    .entry-row { grid-template-columns: 1fr 1fr 28px; }
+    .entry-row .entry-name { grid-column: 1 / 3; grid-row: 1; }
+    .entry-row .plan-row-delete { grid-column: 3 / 4; grid-row: 1; }
+    .entry-row .entry-type { grid-column: 1 / 2; grid-row: 2; }
+    .entry-row .entry-amount { grid-column: 2 / 4; grid-row: 2; }
+    .entry-row-head { display: none; }
+  }
+  .snap-add-row { display: flex; gap: 8px; padding: 8px 18px 14px; border-top: 1px dashed var(--border); }
+  .entry-add-btn {
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 14px; color: var(--text-dim);
+    font-family: var(--body-font); font-size: 12px; cursor: pointer; transition: all 0.15s;
+  }
+  .entry-add-btn:hover { color: var(--text); border-color: var(--border-bright); }
+  .snap-foot {
+    display: flex; gap: 18px; flex-wrap: wrap;
+    padding: 12px 18px; background: var(--bg-elevated);
+    border-top: 1px solid var(--border);
+    font-family: var(--mono-font); font-size: 12px; color: var(--text-dim);
+  }
+  .snap-foot strong { font-weight: 600; }
+  .snap-foot .pos { color: var(--good); }
+  .snap-foot .neg { color: var(--danger); }
+  .snap-foot-net { margin-left: auto; }
 </style>
 </head>
 <body>
@@ -1058,6 +1222,7 @@
     <button class="tab active" data-tab="dashboard">Dashboard</button>
     <button class="tab" data-tab="transactions">Transactions</button>
     <button class="tab" data-tab="plan">Plan</button>
+    <button class="tab" data-tab="assets">Assets</button>
   </div>
 
   <div id="view"></div>
@@ -1075,7 +1240,7 @@
 // ============================================================
 //  APP VERSION
 // ============================================================
-const APP_VERSION = '3.2.4';
+const APP_VERSION = '4.0.0';
 
 // ============================================================
 //  STATE & DEFAULTS
@@ -1281,6 +1446,7 @@ const DEFAULT_PLAN = {
 let state = {
   plans: {},
   transactions: {},
+  assets: [],
   updatedAt: 0,
 };
 
@@ -1332,6 +1498,20 @@ function ensurePlanShape(plan) {
   if (t.manualOverride === undefined) t.manualOverride = null;
 }
 
+// Normalize an assets snapshot to the v4 shape.
+function ensureSnapshotShape(snap) {
+  if (!snap.id) snap.id = 'snap-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+  if (!snap.date) snap.date = new Date().toISOString().slice(0, 10);
+  if (typeof snap.label !== 'string') snap.label = '';
+  if (!Array.isArray(snap.entries)) snap.entries = [];
+  snap.entries.forEach(e => {
+    if (!e.id) e.id = 'ent-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+    if (typeof e.name !== 'string') e.name = '';
+    if (e.type !== 'asset' && e.type !== 'liability') e.type = 'asset';
+    if (typeof e.amount !== 'number') e.amount = parseFloat(e.amount) || 0;
+  });
+}
+
 function migrateState() {
   if (state.plan && !state.plans) {
     state.plans = {};
@@ -1342,6 +1522,9 @@ function migrateState() {
   }
   if (!state.plans) state.plans = {};
   if (!state.transactions) state.transactions = {};
+  // v3 -> v4: assets snapshots.
+  if (!Array.isArray(state.assets)) state.assets = [];
+  state.assets.forEach(ensureSnapshotShape);
   // Migrate every stored plan to the v3 income shape.
   Object.values(state.plans).forEach(ensurePlanShape);
 }
@@ -1901,6 +2084,145 @@ function removeIncomeSource(id) {
   render();
   debouncedSync();
 }
+
+// ----- Assets snapshot actions -----
+
+// Sorted copy of snapshots, oldest first (by date then creation order).
+function sortedSnapshots() {
+  return [...state.assets].sort((a, b) => {
+    if (a.date !== b.date) return a.date < b.date ? -1 : 1;
+    return (a.id < b.id ? -1 : 1);
+  });
+}
+
+// Net worth math for a single snapshot.
+function snapshotTotals(snap) {
+  let assets = 0, liabilities = 0;
+  (snap.entries || []).forEach(e => {
+    const amt = e.amount || 0;
+    if (e.type === 'liability') liabilities += amt;
+    else assets += amt;
+  });
+  return { assets, liabilities, net: assets - liabilities };
+}
+
+function addSnapshot() {
+  // Pre-fill line items from the most recent snapshot so updating balances
+  // on a new day is just editing numbers, not retyping every account.
+  const sorted = sortedSnapshots();
+  const prior = sorted[sorted.length - 1];
+  const today = new Date().toISOString().slice(0, 10);
+  const entries = prior
+    ? prior.entries.map(e => ({
+        id: 'ent-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        name: e.name,
+        type: e.type,
+        amount: e.amount,
+      }))
+    : [
+        { id: 'ent-' + Date.now() + '-a', name: 'Checking', type: 'asset', amount: 0 },
+        { id: 'ent-' + Date.now() + '-b', name: 'Savings', type: 'asset', amount: 0 },
+        { id: 'ent-' + Date.now() + '-c', name: 'Credit card', type: 'liability', amount: 0 },
+      ];
+  const snap = {
+    id: 'snap-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    date: today,
+    label: '',
+    entries,
+  };
+  state.assets.push(snap);
+  saveLocal();
+  render();
+  debouncedSync();
+  setTimeout(() => {
+    const card = document.querySelector(`.snap-card[data-snap-id="${snap.id}"]`);
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const d = card.querySelector('.snap-date-input');
+      if (d) d.focus();
+    }
+  }, 0);
+}
+
+function removeSnapshot(id) {
+  const snap = state.assets.find(s => s.id === id);
+  if (!snap) return;
+  if (!confirm(`Delete the snapshot from ${snap.date}? This can't be undone.`)) return;
+  state.assets = state.assets.filter(s => s.id !== id);
+  saveLocal();
+  render();
+  debouncedSync();
+}
+
+function updateSnapshotField(id, field, value) {
+  const snap = state.assets.find(s => s.id === id);
+  if (!snap) return;
+  if (field === 'date') snap.date = value;
+  else if (field === 'label') snap.label = value;
+  saveLocal();
+  render();
+  debouncedSync();
+}
+
+function addEntry(snapId, type) {
+  const snap = state.assets.find(s => s.id === snapId);
+  if (!snap) return;
+  const ent = {
+    id: 'ent-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    name: type === 'liability' ? 'New liability' : 'New asset',
+    type,
+    amount: 0,
+  };
+  snap.entries.push(ent);
+  saveLocal();
+  render();
+  debouncedSync();
+  setTimeout(() => {
+    const el = document.querySelector(`.entry-name[data-entry-id="${ent.id}"]`);
+    if (el) { el.focus(); el.select(); }
+  }, 0);
+}
+
+function removeEntry(snapId, entryId) {
+  const snap = state.assets.find(s => s.id === snapId);
+  if (!snap) return;
+  snap.entries = snap.entries.filter(e => e.id !== entryId);
+  saveLocal();
+  render();
+  debouncedSync();
+}
+
+function updateEntry(snapId, entryId, field, value) {
+  const snap = state.assets.find(s => s.id === snapId);
+  if (!snap) return;
+  const ent = snap.entries.find(e => e.id === entryId);
+  if (!ent) return;
+  if (field === 'amount') ent.amount = parseFloat(value) || 0;
+  else if (field === 'type') ent.type = value === 'liability' ? 'liability' : 'asset';
+  else ent[field] = value;
+  saveLocal();
+  render();
+  debouncedSync();
+}
+
+// Collapse/expand a single snapshot. Reuses config.collapsedSections so the
+// state persists across reloads, same mechanism as the Plan sections.
+function toggleSnapshot(snapId) {
+  const key = 'snap-' + snapId;
+  config.collapsedSections[key] = !config.collapsedSections[key];
+  saveConfig();
+  render();
+}
+
+// Collapse or expand every snapshot at once.
+function toggleAllSnapshots(collapse) {
+  state.assets.forEach(s => {
+    config.collapsedSections['snap-' + s.id] = collapse;
+  });
+  saveConfig();
+  render();
+}
+
 function toggleSection(key) {
   config.collapsedSections[key] = !config.collapsedSections[key];
   saveConfig();
@@ -2243,10 +2565,18 @@ function render() {
   });
   document.getElementById('settings-btn').classList.toggle('active', activeTab === 'settings');
   document.getElementById('version-label').textContent = 'v' + APP_VERSION;
+  const fab = document.getElementById('fab');
+  if (fab) {
+    const fabHidden = activeTab === 'plan' || activeTab === 'settings';
+    fab.style.display = fabHidden ? 'none' : 'flex';
+    fab.setAttribute('aria-label', activeTab === 'assets' ? 'Add asset snapshot' : 'Add transaction');
+    fab.title = activeTab === 'assets' ? 'New snapshot' : 'New transaction';
+  }
   const view = document.getElementById('view');
   if (activeTab === 'dashboard') view.innerHTML = renderDashboard();
   else if (activeTab === 'transactions') view.innerHTML = renderTransactions();
   else if (activeTab === 'plan') view.innerHTML = renderPlan();
+  else if (activeTab === 'assets') view.innerHTML = renderAssets();
   else if (activeTab === 'settings') view.innerHTML = renderSettings();
   attachViewHandlers();
 }
@@ -2550,6 +2880,265 @@ function renderPlan() {
   `;
 }
 
+// ============================================================
+//  ASSETS
+// ============================================================
+
+// Build an SVG trend chart of net worth (plus assets/liabilities) over time.
+// Pure SVG so it themes via CSS vars and needs no external library.
+function buildAssetsChart(snaps) {
+  if (snaps.length === 0) return '';
+
+  const W = 720, H = 280;
+  const padL = 56, padR = 18, padT = 18, padB = 34;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+
+  // Series: net worth, total assets, total liabilities.
+  const points = snaps.map(s => {
+    const t = snapshotTotals(s);
+    return { date: s.date, net: t.net, assets: t.assets, liabilities: t.liabilities };
+  });
+
+  const allVals = points.flatMap(p => [p.net, p.assets, p.liabilities]);
+  let minV = Math.min(0, ...allVals);
+  let maxV = Math.max(0, ...allVals);
+  if (minV === maxV) { maxV = minV + 1; } // avoid divide by zero
+  // Add a little headroom.
+  const range = maxV - minV;
+  maxV += range * 0.08;
+  minV -= range * 0.08;
+
+  const n = points.length;
+  const xFor = (i) => n === 1 ? padL + plotW / 2 : padL + (i / (n - 1)) * plotW;
+  const yFor = (v) => padT + (1 - (v - minV) / (maxV - minV)) * plotH;
+
+  // Gridlines / y-axis labels (4 ticks).
+  const ticks = 4;
+  let gridSvg = '';
+  for (let i = 0; i <= ticks; i++) {
+    const v = minV + (i / ticks) * (maxV - minV);
+    const y = yFor(v);
+    gridSvg += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" class="chart-grid" />`;
+    gridSvg += `<text x="${padL - 8}" y="${(y + 3.5).toFixed(1)}" class="chart-axis-label" text-anchor="end">${fmtCompact(v)}</text>`;
+  }
+
+  // Zero baseline emphasized if within range.
+  let zeroSvg = '';
+  if (minV < 0 && maxV > 0) {
+    const yz = yFor(0);
+    zeroSvg = `<line x1="${padL}" y1="${yz.toFixed(1)}" x2="${W - padR}" y2="${yz.toFixed(1)}" class="chart-zero" />`;
+  }
+
+  const linePath = (key) => points.map((p, i) => `${i === 0 ? 'M' : 'L'}${xFor(i).toFixed(1)},${yFor(p[key]).toFixed(1)}`).join(' ');
+
+  // Area under the net-worth line, down to the baseline (zero or bottom).
+  const baseY = (minV < 0 && maxV > 0) ? yFor(0) : (padT + plotH);
+  const netLine = linePath('net');
+  const areaPath = `${netLine} L${xFor(n - 1).toFixed(1)},${baseY.toFixed(1)} L${xFor(0).toFixed(1)},${baseY.toFixed(1)} Z`;
+
+  // Dots + interactive titles for net worth.
+  const dots = points.map((p, i) => {
+    const cx = xFor(i).toFixed(1), cy = yFor(p.net).toFixed(1);
+    return `<circle cx="${cx}" cy="${cy}" r="3.5" class="chart-dot"><title>${escapeHtml(formatDateShort(p.date))}: $${fmt(p.net)} net</title></circle>`;
+  }).join('');
+
+  // X-axis date labels — show first, last, and a couple in between to avoid crowding.
+  const labelIdx = new Set([0, n - 1]);
+  if (n > 2) labelIdx.add(Math.floor((n - 1) / 2));
+  if (n > 4) { labelIdx.add(Math.floor((n - 1) / 4)); labelIdx.add(Math.floor(3 * (n - 1) / 4)); }
+  let xLabels = '';
+  points.forEach((p, i) => {
+    if (!labelIdx.has(i)) return;
+    const anchor = i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle';
+    xLabels += `<text x="${xFor(i).toFixed(1)}" y="${H - 10}" class="chart-axis-label" text-anchor="${anchor}">${escapeHtml(formatDateShort(p.date))}</text>`;
+  });
+
+  return `
+    <svg class="assets-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Net worth trend chart">
+      ${gridSvg}
+      ${zeroSvg}
+      <path d="${areaPath}" class="chart-area" />
+      <path d="${linePath('assets')}" class="chart-line chart-line-assets" />
+      <path d="${linePath('liabilities')}" class="chart-line chart-line-liab" />
+      <path d="${netLine}" class="chart-line chart-line-net" />
+      ${dots}
+      ${xLabels}
+    </svg>
+    <div class="chart-legend">
+      <span class="chart-legend-item"><span class="chart-legend-swatch sw-net"></span>Net worth</span>
+      <span class="chart-legend-item"><span class="chart-legend-swatch sw-assets"></span>Total assets</span>
+      <span class="chart-legend-item"><span class="chart-legend-swatch sw-liab"></span>Total liabilities</span>
+    </div>
+  `;
+}
+
+// Compact currency for axis labels: $1.2k, $45k, $1.3M, etc.
+function fmtCompact(v) {
+  const neg = v < 0;
+  let a = Math.abs(v);
+  let s;
+  if (a >= 1e6) s = (a / 1e6).toFixed(a >= 1e7 ? 0 : 1) + 'M';
+  else if (a >= 1e3) s = (a / 1e3).toFixed(a >= 1e4 ? 0 : 1) + 'k';
+  else s = a.toFixed(0);
+  return (neg ? '-$' : '$') + s;
+}
+
+function formatDateShort(iso) {
+  // iso is YYYY-MM-DD; render as e.g. "Jun 7 '26"
+  const parts = String(iso).split('-');
+  if (parts.length !== 3) return iso;
+  const [y, m, d] = parts.map(Number);
+  const dt = new Date(y, m - 1, d);
+  if (isNaN(dt)) return iso;
+  return `${MONTH_NAMES[dt.getMonth()]} ${dt.getDate()} '${String(y).slice(2)}`;
+}
+
+function renderAssets() {
+  const snaps = sortedSnapshots();
+
+  if (snaps.length === 0) {
+    return `
+      <div class="assets-intro">
+        <div class="empty">
+          <div class="empty-big">No snapshots yet</div>
+          <div>Take a snapshot of your accounts on any day — checking, savings, credit cards, loans, investments, anything. Add a few over time and you'll see your net worth trend here.</div>
+          <button class="btn-primary assets-empty-btn" data-action="add-snapshot">Take your first snapshot</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // Latest snapshot summary + delta vs previous.
+  const latest = snaps[snaps.length - 1];
+  const latestTotals = snapshotTotals(latest);
+  const prev = snaps.length > 1 ? snaps[snaps.length - 2] : null;
+  const prevNet = prev ? snapshotTotals(prev).net : null;
+  const delta = prevNet === null ? null : latestTotals.net - prevNet;
+  const deltaPct = (prevNet && prevNet !== 0) ? (delta / Math.abs(prevNet)) * 100 : null;
+
+  // Overall range (first vs latest).
+  const firstNet = snapshotTotals(snaps[0]).net;
+  const totalChange = latestTotals.net - firstNet;
+
+  const deltaClass = delta === null ? '' : delta >= 0 ? 'pos' : 'neg';
+  const deltaStr = delta === null ? '' :
+    `${delta >= 0 ? '+' : '−'}$${fmt(Math.abs(delta))}${deltaPct !== null ? ` (${delta >= 0 ? '+' : '−'}${Math.abs(deltaPct).toFixed(1)}%)` : ''} since last snapshot`;
+
+  const hero = `
+    <div class="assets-hero">
+      <div class="assets-hero-main">
+        <div class="hero-label">Net worth · ${escapeHtml(formatDateShort(latest.date))}</div>
+        <div class="assets-net ${latestTotals.net < 0 ? 'negative' : ''}">$${fmt(latestTotals.net)}</div>
+        ${delta !== null ? `<div class="assets-delta ${deltaClass}">${deltaStr}</div>` : '<div class="assets-delta muted">Your first snapshot — add another to start tracking change.</div>'}
+      </div>
+      <div class="assets-hero-side">
+        <div class="assets-stat">
+          <span class="assets-stat-label">Total assets</span>
+          <span class="assets-stat-value pos">$${fmt(latestTotals.assets)}</span>
+        </div>
+        <div class="assets-stat">
+          <span class="assets-stat-label">Total liabilities</span>
+          <span class="assets-stat-value neg">$${fmt(latestTotals.liabilities)}</span>
+        </div>
+        ${snaps.length > 1 ? `
+        <div class="assets-stat">
+          <span class="assets-stat-label">Since first snapshot</span>
+          <span class="assets-stat-value ${totalChange >= 0 ? 'pos' : 'neg'}">${totalChange >= 0 ? '+' : '−'}$${fmt(Math.abs(totalChange))}</span>
+        </div>` : ''}
+      </div>
+    </div>
+  `;
+
+  const chart = snaps.length >= 2 ? `
+    <div class="assets-chart-card">
+      <div class="assets-chart-head">
+        <span class="group-title">Trend</span>
+        <span class="group-stats">${snaps.length} snapshots</span>
+      </div>
+      ${buildAssetsChart(snaps)}
+    </div>
+  ` : `
+    <div class="assets-chart-card">
+      <div class="chart-hint">Add at least one more snapshot to see your trend chart.</div>
+    </div>
+  `;
+
+  // Snapshot editor cards — most recent first.
+  const snapCards = [...snaps].reverse().map(snap => {
+    const t = snapshotTotals(snap);
+    const entryRows = snap.entries.map(e => `
+      <div class="entry-row" data-entry-id="${e.id}">
+        <input class="plan-input entry-name" type="text" value="${escapeHtml(e.name)}"
+               data-snap-id="${snap.id}" data-entry-id="${e.id}" data-entry-field="name" placeholder="Account name" />
+        <select class="plan-input entry-type" data-snap-id="${snap.id}" data-entry-id="${e.id}" data-entry-field="type">
+          <option value="asset" ${e.type === 'asset' ? 'selected' : ''}>Asset (+)</option>
+          <option value="liability" ${e.type === 'liability' ? 'selected' : ''}>Liability (−)</option>
+        </select>
+        <input class="plan-input entry-amount ${e.type === 'liability' ? 'is-liab' : 'is-asset'}" type="number" step="0.01" inputmode="decimal"
+               value="${e.amount}" data-snap-id="${snap.id}" data-entry-id="${e.id}" data-entry-field="amount" placeholder="0.00" />
+        <button class="plan-row-delete" data-action="remove-entry" data-snap-id="${snap.id}" data-entry-id="${e.id}" aria-label="Remove ${escapeHtml(e.name)}" title="Remove">×</button>
+      </div>
+    `).join('');
+
+    const collapsed = !!config.collapsedSections['snap-' + snap.id];
+    return `
+      <div class="snap-card" data-snap-id="${snap.id}">
+        <div class="snap-head">
+          <div class="snap-head-left">
+            <button class="section-toggle snap-toggle ${collapsed ? 'collapsed' : ''}" data-action="toggle-snapshot" data-snap-id="${snap.id}" aria-label="Toggle snapshot details" aria-expanded="${!collapsed}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <input class="snap-date-input" type="date" value="${escapeHtml(snap.date)}"
+                   data-snap-id="${snap.id}" data-snap-field="date" aria-label="Snapshot date" />
+            <input class="snap-label-input" type="text" value="${escapeHtml(snap.label)}"
+                   data-snap-id="${snap.id}" data-snap-field="label" placeholder="Label (optional)" />
+          </div>
+          <div class="snap-head-right">
+            <span class="snap-net ${t.net < 0 ? 'negative' : ''}">$${fmt(t.net)}</span>
+            <button class="snap-delete" data-action="remove-snapshot" data-snap-id="${snap.id}" aria-label="Delete snapshot" title="Delete snapshot">🗑</button>
+          </div>
+        </div>
+        <div class="section-body snap-body ${collapsed ? 'collapsed' : ''}">
+          <div class="snap-entries">
+            <div class="entry-row entry-row-head">
+              <span>Account</span><span>Type</span><span>Balance</span><span></span>
+            </div>
+            ${entryRows || '<div class="snap-empty">No line items — add one below.</div>'}
+          </div>
+          <div class="snap-add-row">
+            <button class="entry-add-btn" data-action="add-entry" data-snap-id="${snap.id}" data-entry-type="asset">+ Asset</button>
+            <button class="entry-add-btn" data-action="add-entry" data-snap-id="${snap.id}" data-entry-type="liability">+ Liability</button>
+          </div>
+        </div>
+        <div class="snap-foot">
+          <span>Assets <strong class="pos">$${fmt(t.assets)}</strong></span>
+          <span>Liabilities <strong class="neg">$${fmt(t.liabilities)}</strong></span>
+          <span class="snap-foot-net">Net <strong class="${t.net < 0 ? 'neg' : 'pos'}">$${fmt(t.net)}</strong></span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const allCollapsed = snaps.length > 0 && snaps.every(s => config.collapsedSections['snap-' + s.id]);
+  return `
+    ${hero}
+    ${chart}
+    <div class="group-header assets-list-header">
+      <h2 class="group-title">Snapshots</h2>
+      <div class="assets-list-actions">
+        <button class="btn-secondary" data-action="toggle-all-snapshots" data-collapse="${allCollapsed ? 'false' : 'true'}">${allCollapsed ? 'Expand all' : 'Collapse all'}</button>
+        <button class="btn-secondary" data-action="add-snapshot">+ New snapshot</button>
+      </div>
+    </div>
+    <div class="snap-list">
+      ${snapCards}
+    </div>
+  `;
+}
+
 function renderSettings() {
   const themeCards = AVAILABLE_THEMES.map(t => `
     <button class="theme-card ${config.theme === t.id ? 'active' : ''}" data-action="set-theme" data-theme-id="${t.id}">
@@ -2674,6 +3263,16 @@ function attachViewHandlers() {
     el.addEventListener('change', e => updateTaxConfig(el.dataset.taxField, e.target.value));
   });
 
+  // Assets: snapshot date/label
+  document.querySelectorAll('[data-snap-field]').forEach(el => {
+    el.addEventListener('change', e => updateSnapshotField(el.dataset.snapId, el.dataset.snapField, e.target.value));
+  });
+
+  // Assets: entry name/type/amount
+  document.querySelectorAll('[data-entry-field]').forEach(el => {
+    el.addEventListener('change', e => updateEntry(el.dataset.snapId, el.dataset.entryId, el.dataset.entryField, e.target.value));
+  });
+
   // Action buttons
   document.querySelectorAll('[data-action]').forEach(btn => {
     btn.addEventListener('click', e => {
@@ -2685,6 +3284,12 @@ function attachViewHandlers() {
       else if (action === 'remove-category') removeCategory(ds.group, ds.id);
       else if (action === 'add-source') addIncomeSource();
       else if (action === 'remove-source') removeIncomeSource(ds.srcId);
+      else if (action === 'add-snapshot') addSnapshot();
+      else if (action === 'remove-snapshot') removeSnapshot(ds.snapId);
+      else if (action === 'add-entry') addEntry(ds.snapId, ds.entryType);
+      else if (action === 'remove-entry') removeEntry(ds.snapId, ds.entryId);
+      else if (action === 'toggle-snapshot') toggleSnapshot(ds.snapId);
+      else if (action === 'toggle-all-snapshots') toggleAllSnapshots(ds.collapse === 'true');
       else if (action === 'toggle-section') toggleSection(ds.sectionKey);
       else if (action === 'set-theme') {
         applyTheme(ds.themeId);
@@ -2830,7 +3435,10 @@ function init() {
       render();
     });
   });
-  document.getElementById('fab').addEventListener('click', showAddModal);
+  document.getElementById('fab').addEventListener('click', () => {
+    if (activeTab === 'assets') addSnapshot();
+    else showAddModal();
+  });
   document.getElementById('settings-btn').addEventListener('click', () => {
     activeTab = activeTab === 'settings' ? 'dashboard' : 'settings';
     render();
