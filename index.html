@@ -13,6 +13,7 @@
 <script src="https://apis.google.com/js/api.js" async defer></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { overflow-x: hidden; }
 
   /* ============================================================
      THEME: Matcha (default) — original colors
@@ -307,16 +308,39 @@
   .tabs {
     display: flex; gap: 4px; background: var(--bg-card);
     padding: 4px; border-radius: 12px; border: 1px solid var(--border);
-    margin-bottom: 24px; width: fit-content;
+    margin-bottom: 24px; width: fit-content; max-width: 100%;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
   }
+  .tabs::-webkit-scrollbar { display: none; } /* Chrome/Safari */
   .tab {
     padding: 10px 20px; background: none; border: none;
     color: var(--text-dim); font-family: var(--body-font);
     font-size: 13px; font-weight: 500; cursor: pointer;
     border-radius: 8px; transition: all 0.2s;
+    white-space: nowrap;
   }
   .tab:hover { color: var(--text); }
   .tab.active { background: var(--bg-elevated); color: var(--accent); }
+
+  /* Mobile tab dropdown — replaces tab bar on small screens */
+  .tabs-mobile {
+    display: none; margin-bottom: 24px;
+  }
+  .tabs-mobile-select {
+    width: 100%; appearance: none; -webkit-appearance: none;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 40px 12px 16px;
+    font-family: var(--body-font); font-size: 14px; font-weight: 500;
+    color: var(--accent); cursor: pointer; outline: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a9489' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    color-scheme: dark;
+    transition: border-color 0.2s;
+  }
+  [data-theme="daylight"] .tabs-mobile-select { color-scheme: light; }
+  .tabs-mobile-select:focus { border-color: var(--accent); }
 
   .dashboard-top {
     display: grid; grid-template-columns: 2fr 1fr; gap: 16px;
@@ -325,21 +349,10 @@
   @media (max-width: 720px) {
     .dashboard-top { grid-template-columns: 1fr; }
     .header-title { font-size: 32px; }
-    /* Tighten the tabs just enough that all four fit on one line — no scrolling */
-    .tab {
-      padding: 10px 12px;
-      font-size: 12px;
-    }
+    /* Swap tab bar for dropdown on mobile */
+    .tabs { display: none; }
+    .tabs-mobile { display: block; }
   }
-  /* Smallest phones (e.g. iPhone SE ~320px): tighten a touch more so all
-     four tabs still fit on one line without scrolling or overflowing. */
-  @media (max-width: 360px) {
-    .tab {
-      padding: 10px 8px;
-      font-size: 11px;
-    }
-  }
-
   .hero-card {
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: 20px; padding: 28px;
@@ -477,7 +490,7 @@
   }
   .icon-btn:hover { background: var(--bg-elevated); color: var(--text); }
 
-  .form-group { margin-bottom: 16px; }
+  .form-group { margin-bottom: 16px; min-width: 0; }
   .form-label {
     display: block; font-family: var(--mono-font); font-size: 10px;
     color: var(--text-faint); text-transform: uppercase;
@@ -485,10 +498,11 @@
   }
   .form-input,
   .form-select {
-    width: 100%; background: var(--bg-elevated); border: 1px solid var(--border);
+    width: 100%; max-width: 100%; min-width: 0;
+    background: var(--bg-elevated); border: 1px solid var(--border);
     border-radius: 10px; padding: 12px 14px; color: var(--text);
     font-family: var(--body-font); font-size: 15px; outline: none;
-    color-scheme: dark;
+    color-scheme: dark; box-sizing: border-box;
   }
   [data-theme="daylight"] .form-input,
   [data-theme="daylight"] .form-select { color-scheme: light; }
@@ -956,9 +970,76 @@
   .drag-handle:hover { color: var(--text-dim); background: var(--bg); }
   .drag-handle:active { cursor: grabbing; }
 
-  /* The plan-row grid needs a new column for the drag handle */
+  /* The plan-row grid needs columns for drag handle + auto toggle */
   .plan-row {
-    grid-template-columns: auto 1fr 110px 32px;
+    grid-template-columns: auto 1fr 110px 34px 32px;
+  }
+  @media (max-width: 420px) {
+    .plan-row {
+      grid-template-columns: auto 1fr 80px 30px 28px;
+      gap: 6px;
+    }
+    .plan-row-auto-meta { padding-left: 34px; }
+  }
+
+  /* Auto-payment toggle in plan rows */
+  .auto-toggle {
+    background: none; border: 1px solid var(--border); color: var(--text-faint);
+    cursor: pointer; width: 30px; height: 30px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; line-height: 1; transition: all 0.15s;
+    padding: 0; flex-shrink: 0;
+  }
+  .auto-toggle:hover { border-color: var(--border-bright); color: var(--text-dim); }
+  .auto-toggle.active {
+    border-color: var(--accent); color: var(--accent);
+    background: rgba(var(--accent-rgb), 0.08);
+  }
+  .auto-toggle[title]::after { content: none; }
+
+  /* Sub-row that appears below auto-enabled plan items */
+  .plan-row-auto-meta {
+    padding: 4px 14px 10px 46px;
+    display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center;
+    font-family: var(--mono-font); font-size: 11px; color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+    background: rgba(var(--accent-rgb), 0.02);
+  }
+  .plan-row-auto-meta select {
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 8px; color: var(--text);
+    font-family: var(--body-font); font-size: 11px; outline: none;
+    cursor: pointer; color-scheme: dark;
+  }
+  [data-theme="daylight"] .plan-row-auto-meta select { color-scheme: light; }
+  .plan-row-auto-meta select:focus { border-color: var(--accent); }
+  .auto-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: var(--mono-font); font-size: 9px;
+    color: var(--accent); text-transform: uppercase; letter-spacing: 0.12em;
+    background: rgba(var(--accent-rgb), 0.08);
+    border: 1px solid rgba(var(--accent-rgb), 0.15);
+    padding: 2px 7px; border-radius: 4px;
+    white-space: nowrap;
+  }
+  .auto-badge svg { flex-shrink: 0; }
+
+  .linked-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: var(--mono-font); font-size: 9px;
+    color: var(--good); text-transform: uppercase; letter-spacing: 0.1em;
+    cursor: pointer; padding: 2px 6px; border-radius: 4px;
+    background: rgba(79, 212, 158, 0.06);
+    border: 1px solid rgba(79, 212, 158, 0.12);
+    transition: background 0.15s;
+  }
+  .linked-badge:hover { background: rgba(79, 212, 158, 0.12); }
+
+  .plan-row.is-auto {
+    border-bottom: none;
+  }
+  .plan-row.is-auto .plan-input.name-input {
+    color: var(--accent);
   }
 
   /* Pair an income-source + its meta row together as a draggable unit */
@@ -1090,6 +1171,7 @@
   .chart-line-net { stroke: var(--accent); stroke-width: 2.5; }
   .chart-line-assets { stroke: var(--good); stroke-width: 1.5; opacity: 0.65; stroke-dasharray: 4 3; }
   .chart-line-liab { stroke: var(--danger); stroke-width: 1.5; opacity: 0.65; stroke-dasharray: 4 3; }
+  .chart-line-avail { stroke: var(--warn); stroke-width: 2; stroke-dasharray: 6 3; }
   .chart-dot { fill: var(--accent); stroke: var(--bg-card); stroke-width: 1.5; }
   .chart-legend {
     display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;
@@ -1103,6 +1185,7 @@
   .chart-legend-swatch.sw-net { background: var(--accent); height: 4px; }
   .chart-legend-swatch.sw-assets { background: var(--good); }
   .chart-legend-swatch.sw-liab { background: var(--danger); }
+  .chart-legend-swatch.sw-avail { background: var(--warn); }
   .chart-hint, .snap-empty {
     color: var(--text-faint); font-size: 13px; text-align: center; padding: 24px 8px;
   }
@@ -1179,6 +1262,138 @@
   .snap-foot .pos { color: var(--good); }
   .snap-foot .neg { color: var(--danger); }
   .snap-foot-net { margin-left: auto; }
+
+  /* ============================================================
+     SINKING FUNDS
+     ============================================================ */
+  .funds-hero {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 24px 28px; margin-bottom: 24px;
+    position: relative; overflow: hidden;
+  }
+  .funds-hero::before {
+    content: ''; position: absolute; top: -30%; right: -5%;
+    width: 260px; height: 260px;
+    background: radial-gradient(circle, rgba(var(--accent-rgb), 0.10) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .funds-hero-label {
+    font-family: var(--mono-font); font-size: 10px;
+    color: var(--text-faint); text-transform: uppercase;
+    letter-spacing: 0.2em; margin-bottom: 10px;
+  }
+  .funds-hero-amount {
+    font-family: var(--display-font); font-size: 48px;
+    font-weight: 300; letter-spacing: -0.03em; line-height: 1;
+    color: var(--accent);
+  }
+  .funds-hero-sub {
+    font-family: var(--mono-font); font-size: 12px;
+    color: var(--text-dim); margin-top: 10px;
+  }
+
+  .funds-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+    gap: 14px; margin-bottom: 24px;
+  }
+  .fund-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden; transition: border-color 0.2s;
+    min-width: 0;
+  }
+  .fund-card:hover { border-color: var(--border-bright); }
+  .fund-card-head {
+    padding: 18px 20px 14px; display: flex;
+    justify-content: space-between; align-items: flex-start; gap: 12px;
+    min-width: 0;
+  }
+  .fund-card-name {
+    font-family: var(--display-font); font-size: 20px;
+    font-weight: 400; font-style: italic; line-height: 1.2;
+    min-width: 0; overflow: hidden; text-overflow: ellipsis;
+  }
+  .fund-card-balance {
+    font-family: var(--mono-font); font-size: 24px;
+    font-weight: 600; color: var(--accent); white-space: nowrap;
+  }
+  .fund-card-body { padding: 0 20px 16px; }
+  .fund-card-meta {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    font-family: var(--mono-font); font-size: 11px; color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+  .fund-card-meta strong { color: var(--text); font-weight: 500; }
+  .fund-card-bar {
+    height: 6px; background: var(--bg-elevated);
+    border-radius: 3px; overflow: hidden; margin-bottom: 8px;
+  }
+  .fund-card-bar-fill {
+    height: 100%; border-radius: 3px;
+    background: var(--accent); transition: width 0.4s ease;
+  }
+  .fund-card-bar-fill.warn { background: var(--warn); }
+  .fund-card-bar-fill.full { background: var(--good); }
+  .fund-card-goal-text {
+    font-family: var(--mono-font); font-size: 10px;
+    color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.1em;
+  }
+  .fund-card-actions {
+    display: flex; gap: 8px; padding: 0 20px 16px; flex-wrap: wrap;
+  }
+  .fund-btn {
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 14px; color: var(--text-dim);
+    font-family: var(--body-font); font-size: 12px; cursor: pointer;
+    transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px;
+  }
+  .fund-btn:hover { color: var(--text); border-color: var(--border-bright); }
+  .fund-btn.withdraw { color: var(--warn); border-color: rgba(255, 140, 66, 0.3); }
+  .fund-btn.withdraw:hover { background: rgba(255, 140, 66, 0.08); }
+  .fund-btn.delete { color: var(--danger); border-color: rgba(255, 94, 94, 0.25); }
+  .fund-btn.delete:hover { background: rgba(255, 94, 94, 0.08); }
+
+  .fund-history {
+    border-top: 1px solid var(--border); padding: 12px 20px;
+    max-height: 180px; overflow-y: auto;
+    scrollbar-width: thin; scrollbar-color: var(--border-bright) transparent;
+  }
+  .fund-history::-webkit-scrollbar { width: 5px; }
+  .fund-history::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+  .fund-history-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 6px 0; font-size: 12px;
+  }
+  .fund-history-row + .fund-history-row { border-top: 1px solid var(--border); }
+  .fund-history-label { color: var(--text-dim); }
+  .fund-history-label .note { color: var(--text-faint); font-family: var(--mono-font); font-size: 11px; margin-left: 6px; }
+  .fund-history-amount { font-family: var(--mono-font); font-weight: 500; }
+  .fund-history-amount.credit { color: var(--good); }
+  .fund-history-amount.debit { color: var(--warn); }
+
+  .fund-form-section {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 20px; margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .fund-form-title {
+    font-family: var(--display-font); font-size: 20px;
+    font-style: italic; margin-bottom: 14px;
+  }
+  .fund-edit-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    min-width: 0; overflow: hidden;
+  }
+  .fund-edit-grid .form-group { min-width: 0; overflow: hidden; }
+  @media (max-width: 520px) {
+    .fund-edit-grid { grid-template-columns: 1fr; }
+  }
+  .fund-empty {
+    text-align: center; padding: 48px 20px; color: var(--text-faint);
+  }
+  .fund-empty-big {
+    font-family: var(--display-font); font-style: italic;
+    font-size: 22px; color: var(--text-dim); margin-bottom: 8px;
+  }
 </style>
 </head>
 <body>
@@ -1222,7 +1437,17 @@
     <button class="tab active" data-tab="dashboard">Dashboard</button>
     <button class="tab" data-tab="transactions">Transactions</button>
     <button class="tab" data-tab="plan">Plan</button>
+    <button class="tab" data-tab="funds">Funds</button>
     <button class="tab" data-tab="assets">Assets</button>
+  </div>
+  <div class="tabs-mobile">
+    <select class="tabs-mobile-select" id="tabs-mobile-select">
+      <option value="dashboard">Dashboard</option>
+      <option value="transactions">Transactions</option>
+      <option value="plan">Plan</option>
+      <option value="funds">Funds</option>
+      <option value="assets">Assets</option>
+    </select>
   </div>
 
   <div id="view"></div>
@@ -1240,7 +1465,7 @@
 // ============================================================
 //  APP VERSION
 // ============================================================
-const APP_VERSION = '4.0.0';
+const APP_VERSION = '5.0.0';
 
 // ============================================================
 //  STATE & DEFAULTS
@@ -1447,6 +1672,7 @@ let state = {
   plans: {},
   transactions: {},
   assets: [],
+  autoFunds: [],
   updatedAt: 0,
 };
 
@@ -1525,6 +1751,9 @@ function migrateState() {
   // v3 -> v4: assets snapshots.
   if (!Array.isArray(state.assets)) state.assets = [];
   state.assets.forEach(ensureSnapshotShape);
+  // v4 -> v5: sinking funds.
+  if (!Array.isArray(state.autoFunds)) state.autoFunds = [];
+  state.autoFunds.forEach(ensureFundShape);
   // Migrate every stored plan to the v3 income shape.
   Object.values(state.plans).forEach(ensurePlanShape);
 }
@@ -1532,6 +1761,7 @@ function migrateState() {
 let config = { clientId: '', theme: 'matcha', collapsedSections: {} };
 let activeMonth = currentMonthKey();
 let activeTab = 'dashboard';
+let editFundId = null;
 let driveFileId = null;
 let accessToken = null;
 let tokenClient = null;
@@ -1963,6 +2193,13 @@ function monthTxns() {
 function spentByCategory() {
   const map = {};
   monthTxns().forEach(t => { map[t.categoryId] = (map[t.categoryId] || 0) + t.amount; });
+  // Auto-payment categories count as fully spent at their planned amount.
+  const allCats = [...currentPlan().needs, ...currentPlan().wants, ...currentPlan().savings];
+  allCats.forEach(c => {
+    if (c.isAuto && c.planned > 0) {
+      map[c.id] = (map[c.id] || 0) + c.planned;
+    }
+  });
   return map;
 }
 function groupTotals() {
@@ -2012,8 +2249,43 @@ function updatePlanItem(group, id, field, value) {
   const items = currentPlan()[group];
   const item = items.find(i => i.id === id);
   if (!item) return;
-  item[field] = field === 'planned' ? parseFloat(value) || 0 : value;
+  if (field === 'planned') {
+    item.planned = parseFloat(value) || 0;
+    // Sync linked fund's monthly amount.
+    if (item.linkedFundId) {
+      const fund = state.autoFunds.find(f => f.id === item.linkedFundId);
+      if (fund) fund.monthlyAmount = item.planned;
+    }
+  } else if (field === 'isAuto') {
+    item.isAuto = !!value;
+    // If turning off auto, also unlink the fund.
+    if (!item.isAuto) item.linkedFundId = null;
+  } else if (field === 'linkedFundId') {
+    if (value === '__create__') {
+      // Auto-create a fund named after this category.
+      const newFund = {
+        id: 'fund-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        name: item.name + ' fund',
+        monthlyAmount: item.planned,
+        startMonth: currentMonthKey(),
+        goalAmount: 0,
+        withdrawals: [],
+      };
+      state.autoFunds.push(newFund);
+      item.linkedFundId = newFund.id;
+    } else {
+      item.linkedFundId = value || null;
+      // Sync the fund's monthly amount to this plan item's planned value.
+      if (item.linkedFundId) {
+        const fund = state.autoFunds.find(f => f.id === item.linkedFundId);
+        if (fund) fund.monthlyAmount = item.planned;
+      }
+    }
+  } else {
+    item[field] = value;
+  }
   saveLocal();
+  if (field === 'isAuto' || field === 'linkedFundId') render();
   debouncedSync();
 }
 function addCategory(group) {
@@ -2227,6 +2499,209 @@ function toggleSection(key) {
   config.collapsedSections[key] = !config.collapsedSections[key];
   saveConfig();
   render();
+}
+
+// ============================================================
+//  SINKING FUNDS
+// ============================================================
+function ensureFundShape(fund) {
+  if (!fund.id) fund.id = 'fund-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+  if (typeof fund.name !== 'string') fund.name = 'New fund';
+  if (typeof fund.monthlyAmount !== 'number') fund.monthlyAmount = parseFloat(fund.monthlyAmount) || 0;
+  if (!fund.startMonth) fund.startMonth = currentMonthKey();
+  if (typeof fund.goalAmount !== 'number') fund.goalAmount = 0;
+  if (!Array.isArray(fund.withdrawals)) fund.withdrawals = [];
+  fund.withdrawals.forEach(w => {
+    if (!w.id) w.id = 'fw-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+    if (typeof w.amount !== 'number') w.amount = parseFloat(w.amount) || 0;
+    if (!w.date) w.date = new Date().toISOString();
+    if (typeof w.note !== 'string') w.note = '';
+  });
+}
+
+// How many months have elapsed from startMonth to now (inclusive of current month).
+function fundMonthsElapsed(fund) {
+  const [sY, sM] = fund.startMonth.split('-').map(Number);
+  const [cY, cM] = currentMonthKey().split('-').map(Number);
+  const months = (cY - sY) * 12 + (cM - sM) + 1; // inclusive
+  return Math.max(0, months);
+}
+
+// Compute balance and stats for a single fund.
+function computeFund(fund) {
+  const months = fundMonthsElapsed(fund);
+  const totalContributed = fund.monthlyAmount * months;
+  const totalWithdrawn = fund.withdrawals.reduce((a, w) => a + w.amount, 0);
+  const balance = totalContributed - totalWithdrawn;
+  const goalPct = fund.goalAmount > 0 ? (balance / fund.goalAmount) * 100 : 0;
+  return { months, totalContributed, totalWithdrawn, balance, goalPct };
+}
+
+// Find the plan category linked to a given fund (searches current month's plan).
+function linkedPlanItem(fundId) {
+  const plan = currentPlan();
+  for (const group of ['needs', 'wants', 'savings']) {
+    for (const item of plan[group]) {
+      if (item.linkedFundId === fundId) return { item, group };
+    }
+  }
+  return null;
+}
+
+function addFund() {
+  const fund = {
+    id: 'fund-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    name: 'New fund',
+    monthlyAmount: 0,
+    startMonth: currentMonthKey(),
+    goalAmount: 0,
+    withdrawals: [],
+  };
+  state.autoFunds.push(fund);
+  saveLocal();
+  render();
+  debouncedSync();
+  setTimeout(() => {
+    const el = document.querySelector(`.fund-name-input[data-fund-id="${fund.id}"]`);
+    if (el) { el.focus(); el.select(); }
+  }, 0);
+}
+
+function updateFund(id, field, value) {
+  const fund = state.autoFunds.find(f => f.id === id);
+  if (!fund) return;
+  if (field === 'monthlyAmount' || field === 'goalAmount') {
+    fund[field] = parseFloat(value) || 0;
+  } else {
+    fund[field] = value;
+  }
+  saveLocal();
+  render();
+  debouncedSync();
+}
+
+function removeFund(id) {
+  const fund = state.autoFunds.find(f => f.id === id);
+  if (!fund) return;
+  if (!confirm(`Delete the "${fund.name}" fund and all its history?`)) return;
+  state.autoFunds = state.autoFunds.filter(f => f.id !== id);
+  saveLocal();
+  render();
+  debouncedSync();
+}
+
+function addFundWithdrawal(fundId) {
+  const fund = state.autoFunds.find(f => f.id === fundId);
+  if (!fund) return;
+  showFundWithdrawModal(fund);
+}
+
+function showFundWithdrawModal(fund) {
+  const host = document.getElementById('modal-host');
+  const { balance } = computeFund(fund);
+  host.innerHTML = `
+    <div class="modal-overlay" id="modal-overlay">
+      <div class="modal" id="modal">
+        <div class="modal-header">
+          <h2 class="modal-title">Withdraw from ${escapeHtml(fund.name)}</h2>
+          <button class="icon-btn" id="modal-close" aria-label="Close">✕</button>
+        </div>
+        <div style="font-family:var(--mono-font);font-size:13px;color:var(--text-dim);margin-bottom:16px;">
+          Current balance: <strong style="color:var(--accent);">$${fmt(balance, 2)}</strong>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount</label>
+          <input class="form-input amount-input" type="number" inputmode="decimal" step="0.01" id="withdraw-amt" placeholder="0.00" autofocus />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Note (optional)</label>
+          <input class="form-input" type="text" id="withdraw-note" placeholder="What's it for?" />
+        </div>
+        <button class="btn-primary" id="withdraw-btn">Withdraw</button>
+      </div>
+    </div>`;
+
+  const closeModal = () => { host.innerHTML = ''; };
+  document.getElementById('modal-overlay').addEventListener('click', e => {
+    if (e.target.id === 'modal-overlay') closeModal();
+  });
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('withdraw-btn').addEventListener('click', () => {
+    const amt = parseFloat(document.getElementById('withdraw-amt').value);
+    const note = document.getElementById('withdraw-note').value.trim();
+    if (!amt || amt <= 0) { toast('Enter an amount', 'error'); return; }
+    fund.withdrawals.push({
+      id: 'fw-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+      amount: amt,
+      date: new Date().toISOString(),
+      note,
+    });
+    saveLocal();
+    render();
+    debouncedSync();
+    closeModal();
+    toast(`Withdrew $${fmt(amt, 2)} from ${fund.name}`, 'success');
+  });
+  setTimeout(() => document.getElementById('withdraw-amt')?.focus(), 50);
+}
+
+function showFundDepositModal(fund) {
+  const host = document.getElementById('modal-host');
+  const { balance } = computeFund(fund);
+  host.innerHTML = `
+    <div class="modal-overlay" id="modal-overlay">
+      <div class="modal" id="modal">
+        <div class="modal-header">
+          <h2 class="modal-title">Extra deposit to ${escapeHtml(fund.name)}</h2>
+          <button class="icon-btn" id="modal-close" aria-label="Close">✕</button>
+        </div>
+        <div style="font-family:var(--mono-font);font-size:13px;color:var(--text-dim);margin-bottom:16px;">
+          Current balance: <strong style="color:var(--accent);">$${fmt(balance, 2)}</strong>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount</label>
+          <input class="form-input amount-input" type="number" inputmode="decimal" step="0.01" id="deposit-amt" placeholder="0.00" autofocus />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Note (optional)</label>
+          <input class="form-input" type="text" id="deposit-note" placeholder="Bonus contribution, etc." />
+        </div>
+        <button class="btn-primary" id="deposit-btn">Deposit</button>
+      </div>
+    </div>`;
+
+  const closeModal = () => { host.innerHTML = ''; };
+  document.getElementById('modal-overlay').addEventListener('click', e => {
+    if (e.target.id === 'modal-overlay') closeModal();
+  });
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+  document.getElementById('deposit-btn').addEventListener('click', () => {
+    const amt = parseFloat(document.getElementById('deposit-amt').value);
+    const note = document.getElementById('deposit-note').value.trim();
+    if (!amt || amt <= 0) { toast('Enter an amount', 'error'); return; }
+    // Stored as a negative withdrawal (i.e. extra deposit).
+    fund.withdrawals.push({
+      id: 'fw-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+      amount: -amt,
+      date: new Date().toISOString(),
+      note: note || 'Extra deposit',
+    });
+    saveLocal();
+    render();
+    debouncedSync();
+    closeModal();
+    toast(`Deposited $${fmt(amt, 2)} into ${fund.name}`, 'success');
+  });
+  setTimeout(() => document.getElementById('deposit-amt')?.focus(), 50);
+}
+
+function deleteFundWithdrawal(fundId, withdrawalId) {
+  const fund = state.autoFunds.find(f => f.id === fundId);
+  if (!fund) return;
+  fund.withdrawals = fund.withdrawals.filter(w => w.id !== withdrawalId);
+  saveLocal();
+  render();
+  debouncedSync();
 }
 
 function updateTaxConfig(field, value) {
@@ -2563,20 +3038,23 @@ function render() {
   document.querySelectorAll('.tab').forEach(t => {
     t.classList.toggle('active', t.dataset.tab === activeTab);
   });
+  const mobileSelect = document.getElementById('tabs-mobile-select');
+  if (mobileSelect) mobileSelect.value = activeTab;
   document.getElementById('settings-btn').classList.toggle('active', activeTab === 'settings');
   document.getElementById('version-label').textContent = 'v' + APP_VERSION;
   const fab = document.getElementById('fab');
   if (fab) {
     const fabHidden = activeTab === 'plan' || activeTab === 'settings';
     fab.style.display = fabHidden ? 'none' : 'flex';
-    fab.setAttribute('aria-label', activeTab === 'assets' ? 'Add asset snapshot' : 'Add transaction');
-    fab.title = activeTab === 'assets' ? 'New snapshot' : 'New transaction';
+    fab.setAttribute('aria-label', activeTab === 'assets' ? 'Add asset snapshot' : activeTab === 'funds' ? 'Add fund' : 'Add transaction');
+    fab.title = activeTab === 'assets' ? 'New snapshot' : activeTab === 'funds' ? 'New fund' : 'New transaction';
   }
   const view = document.getElementById('view');
   if (activeTab === 'dashboard') view.innerHTML = renderDashboard();
   else if (activeTab === 'transactions') view.innerHTML = renderTransactions();
   else if (activeTab === 'plan') view.innerHTML = renderPlan();
   else if (activeTab === 'assets') view.innerHTML = renderAssets();
+  else if (activeTab === 'funds') view.innerHTML = renderFunds();
   else if (activeTab === 'settings') view.innerHTML = renderSettings();
   attachViewHandlers();
 }
@@ -2594,6 +3072,11 @@ function renderDashboard() {
   const txnCount = monthTxns().length;
   const spent = spentByCategory();
 
+  // Calculate auto-committed total.
+  const allCats = [...currentPlan().needs, ...currentPlan().wants, ...currentPlan().savings];
+  const autoTotal = allCats.filter(c => c.isAuto && c.planned > 0).reduce((a, c) => a + c.planned, 0);
+  const autoCount = allCats.filter(c => c.isAuto && c.planned > 0).length;
+
   const catGroup = (title, items, total, planned) => `
     <div class="group-section">
       <div class="group-header">
@@ -2606,9 +3089,15 @@ function renderDashboard() {
           const pct = item.planned > 0 ? (s / item.planned) * 100 : 0;
           const isOver = pct > 100;
           const isWarn = pct > 80 && !isOver;
+          const isAuto = !!item.isAuto;
+          const linkedFund = item.linkedFundId ? state.autoFunds.find(f => f.id === item.linkedFundId) : null;
+          const fundBal = linkedFund ? computeFund(linkedFund).balance : 0;
           return `
-            <div class="cat-card ${isOver ? 'over' : isWarn ? 'warn' : ''}">
-              <div class="cat-name">${escapeHtml(item.name)}</div>
+            <div class="cat-card ${isOver ? 'over' : isWarn ? 'warn' : ''}" ${linkedFund ? `data-action="go-to-fund" data-fund-id="${linkedFund.id}" style="cursor:pointer;"` : ''}>
+              <div class="cat-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                ${escapeHtml(item.name)}
+                ${isAuto ? '<span class="auto-badge"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>Auto</span>' : ''}
+              </div>
               <div class="cat-amounts">
                 <span class="cat-spent">$${fmt(s)}</span>
                 <span class="cat-planned">/ $${item.planned}</span>
@@ -2616,7 +3105,12 @@ function renderDashboard() {
               <div class="cat-progress">
                 <div class="cat-progress-fill ${isOver ? 'over' : isWarn ? 'warn' : ''}" style="width: ${Math.min(pct, 100)}%"></div>
               </div>
-              <div class="cat-pct">${item.planned === 0 ? 'No budget set' : pct.toFixed(0) + '% used' + (isOver ? ' — over' : '')}</div>
+              <div class="cat-pct">
+                ${item.planned === 0 ? 'No budget set'
+                  : isAuto ? 'Auto-deducted'
+                  : pct.toFixed(0) + '% used' + (isOver ? ' — over' : '')}
+                ${linkedFund ? ` · <span class="linked-badge" style="display:inline-flex;" data-action="go-to-fund" data-fund-id="${linkedFund.id}">↗ Fund: $${fmt(fundBal)}</span>` : ''}
+              </div>
             </div>`;
         }).join('')}
       </div>
@@ -2627,7 +3121,7 @@ function renderDashboard() {
       <div class="hero-card">
         <div class="hero-label">Remaining this month</div>
         <div class="hero-amount ${remainingState}">$${fmt(remaining)}</div>
-        <div class="hero-detail">of $${fmt(takeHome)} take-home · ${takeHome > 0 ? remainingPct.toFixed(0) : '0'}% unspent · ${txnCount} transactions logged</div>
+        <div class="hero-detail">of $${fmt(takeHome)} take-home · ${takeHome > 0 ? remainingPct.toFixed(0) : '0'}% unspent · ${txnCount} transactions${autoCount > 0 ? ` · $${fmt(autoTotal)} auto-committed` : ''}</div>
         <div class="hero-bar">
           <div class="hero-bar-seg hero-bar-needs" style="width: ${Math.min(needsPct, 100)}%"></div>
           <div class="hero-bar-seg hero-bar-wants" style="width: ${Math.min(wantsPct, 100)}%"></div>
@@ -2658,6 +3152,46 @@ function renderDashboard() {
     ${catGroup('Savings', currentPlan().savings, savings, savingsPlanned)}
     ${catGroup('Needs', currentPlan().needs, needs, needsPlanned)}
     ${catGroup('Wants', currentPlan().wants, wants, wantsPlanned)}
+    ${state.autoFunds.length > 0 ? renderDashboardFundsSummary() : ''}
+  `;
+}
+
+function renderDashboardFundsSummary() {
+  const funds = state.autoFunds;
+  const totalBal = funds.reduce((a, f) => a + computeFund(f).balance, 0);
+  const totalMonthly = funds.reduce((a, f) => a + f.monthlyAmount, 0);
+  return `
+    <div class="group-section">
+      <div class="group-header">
+        <h2 class="group-title">Sinking Funds</h2>
+        <div class="group-stats">$${fmt(totalMonthly)}/mo auto-funded</div>
+      </div>
+      <div class="cat-grid">
+        ${funds.map(fund => {
+          const c = computeFund(fund);
+          const hasGoal = fund.goalAmount > 0;
+          const pct = hasGoal ? (c.balance / fund.goalAmount) * 100 : 0;
+          const isOver = pct >= 100;
+          const isWarn = pct > 70 && !isOver;
+          return `
+            <div class="cat-card ${isOver ? '' : isWarn ? 'warn' : ''}">
+              <div class="cat-name">${escapeHtml(fund.name)}</div>
+              <div class="cat-amounts">
+                <span class="cat-spent" style="color:var(--accent);">$${fmt(c.balance)}</span>
+                ${hasGoal ? `<span class="cat-planned">/ $${fmt(fund.goalAmount)} goal</span>` : `<span class="cat-planned">$${fmt(fund.monthlyAmount)}/mo</span>`}
+              </div>
+              ${hasGoal ? `
+                <div class="cat-progress">
+                  <div class="cat-progress-fill ${isOver ? '' : isWarn ? 'warn' : ''}" style="width: ${Math.min(pct, 100)}%;${isOver ? 'background:var(--good);' : ''}"></div>
+                </div>
+                <div class="cat-pct">${isOver ? 'Goal reached!' : pct.toFixed(0) + '% of goal'}</div>
+              ` : `
+                <div class="cat-pct">${c.months} month${c.months !== 1 ? 's' : ''} · $${fmt(c.totalContributed)} contributed</div>
+              `}
+            </div>`;
+        }).join('')}
+      </div>
+    </div>
   `;
 }
 
@@ -2845,14 +3379,41 @@ function renderPlan() {
       </div>
       <div class="section-body ${collapsed ? 'collapsed' : ''}">
         <div class="drag-list" data-drag-key="${key}">
-          ${currentPlan()[key].map(item => `
-            <div class="plan-row" data-drag-key="${key}" data-drag-id="${item.id}">
+          ${currentPlan()[key].map(item => {
+            const isAuto = !!item.isAuto;
+            const linkedFund = item.linkedFundId ? state.autoFunds.find(f => f.id === item.linkedFundId) : null;
+            return `
+            <div class="plan-row ${isAuto ? 'is-auto' : ''}" data-drag-key="${key}" data-drag-id="${item.id}">
               <span class="drag-handle" data-drag-handle aria-label="Drag to reorder" title="Drag to reorder">⋮⋮</span>
               <input class="plan-input name-input" value="${escapeHtml(item.name)}" data-group="${key}" data-id="${item.id}" data-field="name" />
               <input class="plan-input" type="number" value="${item.planned}" data-group="${key}" data-id="${item.id}" data-field="planned" />
+              <button class="auto-toggle ${isAuto ? 'active' : ''}" data-action="toggle-auto" data-group="${key}" data-id="${item.id}" title="${isAuto ? 'Auto-payment ON — click to turn off' : 'Mark as auto-payment'}" aria-label="Toggle auto-payment">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+                </svg>
+              </button>
               <button class="plan-row-delete" data-action="remove-category" data-group="${key}" data-id="${item.id}" aria-label="Remove ${escapeHtml(item.name)}" title="Remove">×</button>
             </div>
-          `).join('')}
+            ${isAuto ? `
+            <div class="plan-row-auto-meta">
+              <span class="auto-badge">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+                Auto
+              </span>
+              <span>$${fmt(item.planned)}/mo auto-deducted</span>
+              <label style="display:inline-flex;align-items:center;gap:6px;">
+                <span>Fund:</span>
+                <select data-group="${key}" data-id="${item.id}" data-field="linkedFundId">
+                  <option value="">None (no fund)</option>
+                  ${state.autoFunds.map(f => `<option value="${f.id}" ${item.linkedFundId === f.id ? 'selected' : ''}>${escapeHtml(f.name)}</option>`).join('')}
+                  <option value="__create__">＋ Create new fund…</option>
+                </select>
+              </label>
+              ${linkedFund ? `<span class="linked-badge" data-action="go-to-fund" data-fund-id="${linkedFund.id}" title="View fund">↗ ${escapeHtml(linkedFund.name)} — $${fmt(computeFund(linkedFund).balance, 2)}</span>` : ''}
+            </div>
+            ` : ''}
+            `;
+          }).join('')}
         </div>
         <button class="plan-row-add" data-action="add-category" data-group="${key}">
           <span class="plan-row-add-icon">+</span>
@@ -2894,13 +3455,32 @@ function buildAssetsChart(snaps) {
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
 
-  // Series: net worth, total assets, total liabilities.
+  // Compute fund balance at a given date string (YYYY-MM-DD).
+  function totalFundBalanceAt(dateStr) {
+    const [dY, dM] = dateStr.split('-').map(Number);
+    return state.autoFunds.reduce((sum, fund) => {
+      const [sY, sM] = fund.startMonth.split('-').map(Number);
+      const months = Math.max(0, (dY - sY) * 12 + (dM - sM) + 1);
+      const contributed = fund.monthlyAmount * months;
+      const withdrawn = fund.withdrawals
+        .filter(w => w.date.slice(0, 10) <= dateStr)
+        .reduce((a, w) => a + w.amount, 0);
+      return sum + Math.max(0, contributed - withdrawn);
+    }, 0);
+  }
+
+  const hasFunds = state.autoFunds.length > 0;
+
+  // Series: net worth, total assets, total liabilities, available.
   const points = snaps.map(s => {
     const t = snapshotTotals(s);
-    return { date: s.date, net: t.net, assets: t.assets, liabilities: t.liabilities };
+    const fundBal = hasFunds ? totalFundBalanceAt(s.date) : 0;
+    return { date: s.date, net: t.net, assets: t.assets, liabilities: t.liabilities, available: t.net - fundBal };
   });
 
-  const allVals = points.flatMap(p => [p.net, p.assets, p.liabilities]);
+  const allVals = points.flatMap(p => hasFunds
+    ? [p.net, p.assets, p.liabilities, p.available]
+    : [p.net, p.assets, p.liabilities]);
   let minV = Math.min(0, ...allVals);
   let maxV = Math.max(0, ...allVals);
   if (minV === maxV) { maxV = minV + 1; } // avoid divide by zero
@@ -2940,7 +3520,8 @@ function buildAssetsChart(snaps) {
   // Dots + interactive titles for net worth.
   const dots = points.map((p, i) => {
     const cx = xFor(i).toFixed(1), cy = yFor(p.net).toFixed(1);
-    return `<circle cx="${cx}" cy="${cy}" r="3.5" class="chart-dot"><title>${escapeHtml(formatDateShort(p.date))}: $${fmt(p.net)} net</title></circle>`;
+    const avail = hasFunds ? ` · $${fmt(p.available)} available` : '';
+    return `<circle cx="${cx}" cy="${cy}" r="3.5" class="chart-dot"><title>${escapeHtml(formatDateShort(p.date))}: $${fmt(p.net)} net${avail}</title></circle>`;
   }).join('');
 
   // X-axis date labels — show first, last, and a couple in between to avoid crowding.
@@ -2961,12 +3542,14 @@ function buildAssetsChart(snaps) {
       <path d="${areaPath}" class="chart-area" />
       <path d="${linePath('assets')}" class="chart-line chart-line-assets" />
       <path d="${linePath('liabilities')}" class="chart-line chart-line-liab" />
+      ${hasFunds ? `<path d="${linePath('available')}" class="chart-line chart-line-avail" />` : ''}
       <path d="${netLine}" class="chart-line chart-line-net" />
       ${dots}
       ${xLabels}
     </svg>
     <div class="chart-legend">
       <span class="chart-legend-item"><span class="chart-legend-swatch sw-net"></span>Net worth</span>
+      ${hasFunds ? '<span class="chart-legend-item"><span class="chart-legend-swatch sw-avail"></span>Available</span>' : ''}
       <span class="chart-legend-item"><span class="chart-legend-swatch sw-assets"></span>Total assets</span>
       <span class="chart-legend-item"><span class="chart-legend-swatch sw-liab"></span>Total liabilities</span>
     </div>
@@ -3025,6 +3608,10 @@ function renderAssets() {
   const deltaStr = delta === null ? '' :
     `${delta >= 0 ? '+' : '−'}$${fmt(Math.abs(delta))}${deltaPct !== null ? ` (${delta >= 0 ? '+' : '−'}${Math.abs(deltaPct).toFixed(1)}%)` : ''} since last snapshot`;
 
+  // Sinking fund balances — money committed to funds.
+  const totalFundBalance = state.autoFunds.reduce((a, f) => a + computeFund(f).balance, 0);
+  const availableNet = latestTotals.net - totalFundBalance;
+
   const hero = `
     <div class="assets-hero">
       <div class="assets-hero-main">
@@ -3045,6 +3632,15 @@ function renderAssets() {
         <div class="assets-stat">
           <span class="assets-stat-label">Since first snapshot</span>
           <span class="assets-stat-value ${totalChange >= 0 ? 'pos' : 'neg'}">${totalChange >= 0 ? '+' : '−'}$${fmt(Math.abs(totalChange))}</span>
+        </div>` : ''}
+        ${totalFundBalance > 0 ? `
+        <div class="assets-stat" style="border-top: 1px dashed var(--border); margin-top: 4px; padding-top: 12px;">
+          <span class="assets-stat-label">Committed to funds</span>
+          <span class="assets-stat-value" style="color: var(--warn);">−$${fmt(totalFundBalance)}</span>
+        </div>
+        <div class="assets-stat">
+          <span class="assets-stat-label" style="font-weight: 500; color: var(--text);">Available</span>
+          <span class="assets-stat-value ${availableNet >= 0 ? 'pos' : 'neg'}" style="font-size: 18px;">$${fmt(availableNet)}</span>
         </div>` : ''}
       </div>
     </div>
@@ -3135,6 +3731,184 @@ function renderAssets() {
     </div>
     <div class="snap-list">
       ${snapCards}
+    </div>
+  `;
+}
+
+function renderFunds() {
+  const funds = state.autoFunds;
+  const totalBalance = funds.reduce((a, f) => a + computeFund(f).balance, 0);
+  const totalMonthly = funds.reduce((a, f) => a + f.monthlyAmount, 0);
+
+  if (funds.length === 0) {
+    return `
+      <div class="fund-empty">
+        <div class="fund-empty-big">No sinking funds yet</div>
+        <div style="max-width:420px;margin:0 auto 20px;line-height:1.6;">
+          Sinking funds let you set aside a fixed amount each month for future expenses — car repairs, vacations, gifts, and more. The balance grows automatically over time.
+        </div>
+        <button class="btn-primary" style="max-width:280px;margin:0 auto;" data-action="add-fund">
+          Create your first fund
+        </button>
+      </div>`;
+  }
+
+  const fundCards = funds.map(fund => {
+    const c = computeFund(fund);
+    const hasGoal = fund.goalAmount > 0;
+    const goalPctClamped = Math.min(c.goalPct, 100);
+    const barClass = c.goalPct >= 100 ? 'full' : c.goalPct >= 70 ? 'warn' : '';
+    const linked = linkedPlanItem(fund.id);
+
+    // Build event history: monthly contributions + withdrawals, sorted newest first.
+    const events = [];
+    // Add monthly contribution entries for last 6 months (or since start).
+    const [cY, cM] = currentMonthKey().split('-').map(Number);
+    for (let i = 0; i < Math.min(c.months, 6); i++) {
+      let m = cM - i;
+      let y = cY;
+      while (m < 1) { m += 12; y--; }
+      const mk = `${y}-${String(m).padStart(2, '0')}`;
+      events.push({
+        date: new Date(y, m - 1, 1).toISOString(),
+        month: mk,
+        type: 'contribution',
+        amount: fund.monthlyAmount,
+        note: monthLabel(mk),
+      });
+    }
+    // Add withdrawals.
+    fund.withdrawals.forEach(w => {
+      events.push({
+        date: w.date,
+        type: w.amount < 0 ? 'deposit' : 'withdrawal',
+        amount: Math.abs(w.amount),
+        note: w.note || (w.amount < 0 ? 'Extra deposit' : 'Withdrawal'),
+        id: w.id,
+        fundId: fund.id,
+      });
+    });
+    events.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    const historyRows = events.slice(0, 12).map(e => {
+      const d = new Date(e.date);
+      const dateStr = e.type === 'contribution'
+        ? e.note
+        : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const amtClass = e.type === 'withdrawal' ? 'debit' : 'credit';
+      const sign = e.type === 'withdrawal' ? '−' : '+';
+      const noteHtml = (e.type !== 'contribution' && e.note) ? `<span class="note">${escapeHtml(e.note)}</span>` : '';
+      const deleteBtn = e.id ? ` <button class="icon-btn" style="font-size:12px;padding:2px 4px;" data-action="delete-fund-withdrawal" data-fund-id="${e.fundId}" data-withdrawal-id="${e.id}" aria-label="Remove">×</button>` : '';
+      return `
+        <div class="fund-history-row">
+          <span class="fund-history-label">${dateStr}${noteHtml}${deleteBtn}</span>
+          <span class="fund-history-amount ${amtClass}">${sign}$${fmt(e.amount, 2)}</span>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="fund-card">
+        <div class="fund-card-head">
+          <div class="fund-card-name">${escapeHtml(fund.name)}</div>
+          <div class="fund-card-balance">$${fmt(c.balance, 2)}</div>
+        </div>
+        <div class="fund-card-body">
+          <div class="fund-card-meta">
+            <span>$<strong>${fmt(fund.monthlyAmount)}</strong>/mo</span>
+            <span><strong>${c.months}</strong> month${c.months !== 1 ? 's' : ''} funded</span>
+            <span>Contributed: $<strong>${fmt(c.totalContributed, 2)}</strong></span>
+            ${c.totalWithdrawn > 0 ? `<span>Spent: $<strong>${fmt(c.totalWithdrawn, 2)}</strong></span>` : ''}
+            ${linked ? `<span class="linked-badge" style="display:inline-flex;" title="Linked to ${escapeHtml(linked.item.name)} in ${linked.group}">⚡ ${escapeHtml(linked.item.name)}</span>` : ''}
+          </div>
+          ${hasGoal ? `
+            <div class="fund-card-bar">
+              <div class="fund-card-bar-fill ${barClass}" style="width: ${goalPctClamped}%"></div>
+            </div>
+            <div class="fund-card-goal-text">
+              ${c.goalPct >= 100 ? 'Goal reached!' : `${goalPctClamped.toFixed(0)}% of $${fmt(fund.goalAmount)} goal`}
+              ${c.goalPct < 100 && fund.monthlyAmount > 0 ? ` · ~${Math.ceil((fund.goalAmount - c.balance) / fund.monthlyAmount)} months to go` : ''}
+            </div>
+          ` : ''}
+        </div>
+        <div class="fund-card-actions">
+          <button class="fund-btn withdraw" data-action="fund-withdraw" data-fund-id="${fund.id}">↗ Withdraw</button>
+          <button class="fund-btn" data-action="fund-deposit" data-fund-id="${fund.id}">↙ Deposit</button>
+          <button class="fund-btn" data-action="fund-edit" data-fund-id="${fund.id}">Edit</button>
+          <button class="fund-btn delete" data-action="fund-delete" data-fund-id="${fund.id}">×</button>
+        </div>
+        ${events.length > 0 ? `
+          <div class="fund-history">
+            ${historyRows}
+          </div>
+        ` : ''}
+      </div>`;
+  }).join('');
+
+  // Check if any fund is being edited.
+  const editSection = editFundId ? renderFundEditForm(editFundId) : '';
+
+  return `
+    <div class="funds-hero">
+      <div class="funds-hero-label">Total fund balance</div>
+      <div class="funds-hero-amount">$${fmt(totalBalance, 2)}</div>
+      <div class="funds-hero-sub">
+        ${funds.length} fund${funds.length !== 1 ? 's' : ''} · $${fmt(totalMonthly)} auto-funded per month
+      </div>
+    </div>
+    ${editSection}
+    <div class="funds-grid">
+      ${fundCards}
+    </div>
+  `;
+}
+
+function renderFundEditForm(fundId) {
+  const fund = state.autoFunds.find(f => f.id === fundId);
+  if (!fund) { state._editFundId = null; return ''; }
+
+  return `
+    <div class="fund-form-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div class="fund-form-title">Editing: ${escapeHtml(fund.name)}</div>
+        <button class="icon-btn" data-action="fund-edit-close" aria-label="Close editor">✕</button>
+      </div>
+      <div class="fund-edit-grid">
+        <div class="form-group">
+          <label class="form-label">Fund name</label>
+          <input class="form-input fund-name-input" type="text" value="${escapeHtml(fund.name)}"
+                 data-fund-id="${fund.id}" data-fund-field="name" placeholder="e.g. Car Maintenance" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Monthly contribution</label>
+          <input class="form-input" type="number" step="0.01" inputmode="decimal"
+                 value="${fund.monthlyAmount || 0}"
+                 data-fund-id="${fund.id}" data-fund-field="monthlyAmount" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Start month</label>
+          <div style="display:flex;gap:8px;">
+            <select class="form-input" style="flex:1;" data-fund-id="${fund.id}" data-fund-field="startMonth" data-part="month">
+              ${MONTH_NAMES.map((m, i) => `<option value="${i+1}" ${parseInt(fund.startMonth.split('-')[1]) === i+1 ? 'selected' : ''}>${m}</option>`).join('')}
+            </select>
+            <select class="form-input" style="flex:1;" data-fund-id="${fund.id}" data-fund-field="startMonth" data-part="year">
+              ${(() => {
+                const curY = new Date().getFullYear();
+                let opts = '';
+                for (let y = curY - 5; y <= curY + 1; y++) {
+                  opts += '<option value="' + y + '"' + (parseInt(fund.startMonth.split('-')[0]) === y ? ' selected' : '') + '>' + y + '</option>';
+                }
+                return opts;
+              })()}
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Goal amount (0 = no goal)</label>
+          <input class="form-input" type="number" step="0.01" inputmode="decimal"
+                 value="${fund.goalAmount || 0}"
+                 data-fund-id="${fund.id}" data-fund-field="goalAmount" placeholder="0" />
+        </div>
+      </div>
     </div>
   `;
 }
@@ -3246,6 +4020,15 @@ function attachViewHandlers() {
     });
   });
 
+  // Fund-link selects inside plan auto-meta rows
+  document.querySelectorAll('.plan-row-auto-meta select[data-field="linkedFundId"]').forEach(sel => {
+    sel.addEventListener('change', e => {
+      const { group, id, field } = e.target.dataset;
+      if (!group) return;
+      updatePlanItem(group, id, field, e.target.value);
+    });
+  });
+
   // Income source inputs (text/number/select)
   document.querySelectorAll('[data-src-id]').forEach(el => {
     if (el.matches('button')) return; // delete buttons handled by data-action
@@ -3306,6 +4089,52 @@ function attachViewHandlers() {
       }
       else if (action === 'export') exportData();
       else if (action === 'import') document.getElementById('import-input').click();
+      // Fund actions
+      else if (action === 'add-fund') addFund();
+      else if (action === 'fund-withdraw') addFundWithdrawal(ds.fundId);
+      else if (action === 'fund-deposit') {
+        const fund = state.autoFunds.find(f => f.id === ds.fundId);
+        if (fund) showFundDepositModal(fund);
+      }
+      else if (action === 'fund-delete') removeFund(ds.fundId);
+      else if (action === 'fund-edit') {
+        editFundId = ds.fundId;
+        render();
+      }
+      else if (action === 'fund-edit-close') {
+        editFundId = null;
+        render();
+      }
+      else if (action === 'delete-fund-withdrawal') deleteFundWithdrawal(ds.fundId, ds.withdrawalId);
+      else if (action === 'toggle-auto') {
+        const items = currentPlan()[ds.group];
+        const item = items ? items.find(i => i.id === ds.id) : null;
+        if (item) updatePlanItem(ds.group, ds.id, 'isAuto', !item.isAuto);
+      }
+      else if (action === 'go-to-fund') {
+        activeTab = 'funds';
+        render();
+      }
+    });
+  });
+
+  // Fund field inputs
+  document.querySelectorAll('[data-fund-field]').forEach(el => {
+    el.addEventListener('change', e => {
+      const fundId = el.dataset.fundId;
+      const field = el.dataset.fundField;
+      if (field === 'startMonth') {
+        // Combine month + year selects into YYYY-MM.
+        const container = el.closest('.form-group');
+        const monthSel = container.querySelector('[data-part="month"]');
+        const yearSel = container.querySelector('[data-part="year"]');
+        if (monthSel && yearSel) {
+          const combined = yearSel.value + '-' + String(monthSel.value).padStart(2, '0');
+          updateFund(fundId, field, combined);
+        }
+      } else {
+        updateFund(fundId, field, e.target.value);
+      }
     });
   });
 
@@ -3435,8 +4264,13 @@ function init() {
       render();
     });
   });
+  document.getElementById('tabs-mobile-select').addEventListener('change', (e) => {
+    activeTab = e.target.value;
+    render();
+  });
   document.getElementById('fab').addEventListener('click', () => {
     if (activeTab === 'assets') addSnapshot();
+    else if (activeTab === 'funds') addFund();
     else showAddModal();
   });
   document.getElementById('settings-btn').addEventListener('click', () => {
