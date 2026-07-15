@@ -1466,7 +1466,7 @@
 // ============================================================
 //  APP VERSION
 // ============================================================
-const APP_VERSION = '5.1.0';
+const APP_VERSION = '5.1.1';
 
 // ============================================================
 //  STATE & DEFAULTS
@@ -2482,7 +2482,7 @@ function updateEntry(snapId, entryId, field, value) {
   const ent = snap.entries.find(e => e.id === entryId);
   if (!ent) return;
   if (field === 'amount') ent.amount = parseFloat(value) || 0;
-  else if (field === 'type') ent.type = value === 'liability' ? 'liability' : 'asset';
+  else if (field === 'type') ent.type = ['asset', 'liability', 'nonAvailable'].includes(value) ? value : 'asset';
   else ent[field] = value;
   saveLocal();
   render();
