@@ -400,6 +400,23 @@
     background: var(--bg-card); border: 1px solid var(--border);
     border-radius: 20px; padding: 24px;
   }
+  .summary-card-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 4px; gap: 10px; flex-wrap: wrap;
+  }
+  .summary-card-head .hero-label { margin-bottom: 0; }
+  .plan-view-toggle {
+    display: flex; gap: 2px; background: var(--bg-elevated);
+    border: 1px solid var(--border); border-radius: 8px; padding: 2px;
+  }
+  .plan-view-btn {
+    background: none; border: none; color: var(--text-faint);
+    font-family: var(--body-font); font-size: 11px; font-weight: 500;
+    padding: 5px 11px; border-radius: 6px; cursor: pointer;
+    transition: all 0.15s; white-space: nowrap;
+  }
+  .plan-view-btn:hover { color: var(--text-dim); }
+  .plan-view-btn.active { background: var(--bg-card); color: var(--accent); }
   .summary-row {
     display: flex; justify-content: space-between; align-items: baseline;
     padding: 10px 0; border-bottom: 1px solid var(--border);
@@ -408,6 +425,10 @@
   .summary-label { font-size: 13px; color: var(--text-dim); }
   .summary-value { font-family: var(--mono-font); font-size: 15px; font-weight: 500; }
   .summary-pct { font-family: var(--mono-font); font-size: 11px; color: var(--text-faint); margin-left: 8px; }
+  .summary-row-unalloc .summary-label { color: var(--text-faint); font-style: italic; }
+  .summary-row-unalloc .summary-value { color: var(--text-faint); }
+  .summary-row-unalloc.over .summary-label,
+  .summary-row-unalloc.over .summary-value { color: var(--danger); font-style: normal; }
 
   .group-section { margin-bottom: 32px; }
   .group-header {
@@ -1466,7 +1487,7 @@
 // ============================================================
 //  APP VERSION
 // ============================================================
-const APP_VERSION = '5.1.1';
+const APP_VERSION = '5.1.2';
 
 // ============================================================
 //  STATE & DEFAULTS
@@ -3206,6 +3227,18 @@ function renderDashboard() {
       </div>
     </div>`;
 
+  const planViewMode = config.planViewMode === 'planned' ? 'planned' : 'spent';
+  const isPlannedView = planViewMode === 'planned';
+  const dNeeds = isPlannedView ? needsPlanned : needs;
+  const dWants = isPlannedView ? wantsPlanned : wants;
+  const dSavings = isPlannedView ? savingsPlanned : savings;
+  const dNeedsPct = takeHome > 0 ? (dNeeds / takeHome) * 100 : 0;
+  const dWantsPct = takeHome > 0 ? (dWants / takeHome) * 100 : 0;
+  const dSavingsPct = takeHome > 0 ? (dSavings / takeHome) * 100 : 0;
+  const unallocated = takeHome - (dNeeds + dWants + dSavings);
+  const unallocatedPct = takeHome > 0 ? (unallocated / takeHome) * 100 : 0;
+  const isOverAllocated = unallocated < -0.005;
+
   return `
     <div class="dashboard-top">
       <div class="hero-card">
@@ -3224,19 +3257,30 @@ function renderDashboard() {
         </div>
       </div>
       <div class="summary-card">
-        <div class="hero-label">50/30/20 plan</div>
+        <div class="summary-card-head">
+          <div class="hero-label">50/30/20 plan</div>
+          <div class="plan-view-toggle">
+            <button class="plan-view-btn ${!isPlannedView ? 'active' : ''}" data-action="set-plan-view" data-view="spent">Spent</button>
+            <button class="plan-view-btn ${isPlannedView ? 'active' : ''}" data-action="set-plan-view" data-view="planned">Planned</button>
+          </div>
+        </div>
         <div class="summary-row">
           <span class="summary-label">Needs</span>
-          <span><span class="summary-value">$${fmt(needs)}</span><span class="summary-pct">${needsPct.toFixed(0)}% / 50%</span></span>
+          <span><span class="summary-value">$${fmt(dNeeds)}</span><span class="summary-pct">${dNeedsPct.toFixed(0)}% / 50%</span></span>
         </div>
         <div class="summary-row">
           <span class="summary-label">Wants</span>
-          <span><span class="summary-value">$${fmt(wants)}</span><span class="summary-pct">${wantsPct.toFixed(0)}% / 30%</span></span>
+          <span><span class="summary-value">$${fmt(dWants)}</span><span class="summary-pct">${dWantsPct.toFixed(0)}% / 30%</span></span>
         </div>
         <div class="summary-row">
           <span class="summary-label">Savings</span>
-          <span><span class="summary-value">$${fmt(savings)}</span><span class="summary-pct">${savingsPct.toFixed(0)}% / 20%</span></span>
+          <span><span class="summary-value">$${fmt(dSavings)}</span><span class="summary-pct">${dSavingsPct.toFixed(0)}% / 20%</span></span>
         </div>
+        ${isPlannedView ? `
+        <div class="summary-row summary-row-unalloc ${isOverAllocated ? 'over' : ''}">
+          <span class="summary-label">${isOverAllocated ? 'Over-allocated' : 'Unallocated'}</span>
+          <span><span class="summary-value">$${fmt(Math.abs(unallocated))}</span><span class="summary-pct">${Math.abs(unallocatedPct).toFixed(0)}%</span></span>
+        </div>` : ''}
       </div>
     </div>
     ${catGroup('Savings', currentPlan().savings, savings, savingsPlanned)}
@@ -4195,6 +4239,11 @@ function attachViewHandlers() {
       else if (action === 'toggle-snapshot') toggleSnapshot(ds.snapId);
       else if (action === 'toggle-all-snapshots') toggleAllSnapshots(ds.collapse === 'true');
       else if (action === 'toggle-section') toggleSection(ds.sectionKey);
+      else if (action === 'set-plan-view') {
+        config.planViewMode = ds.view === 'planned' ? 'planned' : 'spent';
+        saveConfig();
+        render();
+      }
       else if (action === 'set-theme') {
         applyTheme(ds.themeId);
         saveConfig();
