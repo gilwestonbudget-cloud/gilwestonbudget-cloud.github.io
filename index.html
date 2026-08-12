@@ -2924,6 +2924,54 @@ function addAccount(data) {
   toast(`Added ${acct.name}`, 'success');
 }
 
+// True if two accounts have identical metadata — name, type, institution,
+// last 4, and category all matching exactly. This is deliberately strict:
+// merging is only offered when every field lines up, so it only fires when
+// you've actually made two records describe the same real account, never
+// on a coincidental partial match.
+function accountsMatch(a, b) {
+  if (!a || !b || a.id === b.id) return false;
+  if (a.name.trim().toLowerCase() !== b.name.trim().toLowerCase()) return false;
+  if (a.type !== b.type) return false;
+  if (a.institutionId !== b.institutionId) return false;
+  if (a.institutionId === 'custom' && a.institutionCustom.trim().toLowerCase() !== b.institutionCustom.trim().toLowerCase()) return false;
+  if ((a.last4 || '') !== (b.last4 || '')) return false;
+  if (a.category !== b.category) return false;
+  return true;
+}
+
+// Folds `mergeId` into `keepId`: every snapshot entry that belonged to the
+// merged account gets reassigned to the kept one, so its full balance
+// history becomes part of a single account instead of being split across
+// two records — exactly the situation old Assets-tab data can end up in,
+// where the same real account was typed under two different names.
+function mergeAccounts(keepId, mergeId) {
+  const keep = findAccount(keepId);
+  const merged = findAccount(mergeId);
+  if (!keep || !merged || keep.id === merged.id) return;
+
+  state.assets.forEach(snap => {
+    const mergedEntry = snap.entries.find(e => e.accountId === merged.id);
+    if (!mergedEntry) return;
+    const keepEntry = snap.entries.find(e => e.accountId === keep.id);
+    if (keepEntry) {
+      // Same snapshot already has an entry for both — a duplicate-entry
+      // slip rather than real data. Keep whichever balance is non-zero.
+      if (keepEntry.amount === 0 && mergedEntry.amount !== 0) keepEntry.amount = mergedEntry.amount;
+      snap.entries = snap.entries.filter(e => e !== mergedEntry);
+    } else {
+      mergedEntry.accountId = keep.id;
+    }
+  });
+
+  // The merged account should stay visible across the full combined
+  // history, and count as active if either side was.
+  if (merged.dateAdded < keep.dateAdded) keep.dateAdded = merged.dateAdded;
+  if (!merged.deletedDate) keep.deletedDate = null;
+
+  state.accounts = state.accounts.filter(a => a.id !== merged.id);
+}
+
 function updateAccount(id, data) {
   const acct = findAccount(id);
   if (!acct) return;
@@ -2935,6 +2983,26 @@ function updateAccount(id, data) {
   if (data.category !== undefined) acct.category = data.category;
   if (data.dateAdded !== undefined && data.dateAdded) acct.dateAdded = data.dateAdded;
   ensureAccountShape(acct);
+
+  // If this edit just made the account an exact match for another one,
+  // offer to combine them — this is how two old differently-named entries
+  // for the same real account become one, once you've retitled them to
+  // match.
+  const dup = state.accounts.find(a => accountsMatch(a, acct));
+  if (dup) {
+    const mergeConfirmed = confirm(
+      `This now exactly matches "${dup.name}" (same type, institution, last 4, and category). Merge them into one account? All snapshot history from both will be combined.`
+    );
+    if (mergeConfirmed) {
+      mergeAccounts(acct.id, dup.id);
+      saveLocal();
+      render();
+      debouncedSync();
+      toast(`Merged into ${acct.name}`, 'success');
+      return;
+    }
+  }
+
   saveLocal();
   render();
   debouncedSync();
