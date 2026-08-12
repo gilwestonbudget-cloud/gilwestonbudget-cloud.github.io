@@ -1156,7 +1156,7 @@
     position: fixed; top: 0; left: 0; right: 0; z-index: 40;
     display: flex; align-items: center; justify-content: center; gap: 10px;
     background: var(--bg-card); border-bottom: 1px solid var(--border);
-    padding: 12px 16px calc(12px + env(safe-area-inset-top)) 16px;
+    padding: 12px 16px;
     padding-top: max(12px, env(safe-area-inset-top));
     transform: translateY(-100%); opacity: 0;
     transition: transform 0.25s ease, opacity 0.25s ease;
@@ -1199,6 +1199,11 @@
     display: flex; gap: 4px; justify-content: center;
     margin-top: 14px; position: relative; z-index: 1;
   }
+  .funds-toggle-row {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-top: 12px; flex-wrap: wrap; position: relative; z-index: 1;
+  }
+  .funds-toggle-label { font-size: 12px; color: var(--text-faint); }
   .range-pill {
     background: none; border: none; color: var(--text-faint);
     font-family: var(--mono-font); font-size: 11px; font-weight: 600;
@@ -1964,7 +1969,7 @@ function migrateState() {
   Object.values(state.plans).forEach(ensurePlanShape);
 }
 
-let config = { clientId: '', theme: 'matcha', collapsedSections: {}, accountsChartRange: 'all' };
+let config = { clientId: '', theme: 'matcha', collapsedSections: {}, accountsChartRange: 'all', includeFundsInNetWorth: false };
 let chartHoverState = null; // data for the net worth trend chart's hover tooltip, set fresh by buildNetWorthChart()
 let activeMonth = currentMonthKey();
 let activeTab = 'dashboard';
@@ -2378,7 +2383,7 @@ function loadLocal() {
     const raw = localStorage.getItem(CONFIG_KEY);
     if (raw) {
       const loaded = JSON.parse(raw);
-      config = { clientId: '', theme: 'matcha', collapsedSections: {}, accountsChartRange: 'all', ...loaded };
+      config = { clientId: '', theme: 'matcha', collapsedSections: {}, accountsChartRange: 'all', includeFundsInNetWorth: false, ...loaded };
       if (!config.collapsedSections || typeof config.collapsedSections !== 'object') {
         config.collapsedSections = {};
       }
@@ -2772,10 +2777,19 @@ function snapshotTotals(snap) {
     else if (acct.category === 'nonAvailable') nonAvailable += amt;
     else assets += amt;
   });
-  const net = assets + nonAvailable - liabilities;
-  // Available = liquid assets minus liabilities (non-available and funds excluded).
-  const liquid = assets - liabilities;
-  return { assets, nonAvailable, liabilities, net, liquid };
+  // Sinking funds are tracked separately from accounts (they're typically
+  // money already sitting inside one of the accounts above, just
+  // earmarked for something), so they're excluded from net worth by
+  // default to avoid double-counting. The toggle on the Accounts tab lets
+  // you opt in if your funds represent money that isn't already reflected
+  // in an account balance.
+  const funds = (snap.fundBalance !== null && snap.fundBalance !== undefined) ? snap.fundBalance : 0;
+  const fundsIncluded = !!config.includeFundsInNetWorth;
+  const fundsAdd = fundsIncluded ? funds : 0;
+  const net = assets + nonAvailable - liabilities + fundsAdd;
+  // Available = liquid assets minus liabilities (non-available excluded; funds included only if toggled on).
+  const liquid = assets - liabilities + fundsAdd;
+  return { assets, nonAvailable, liabilities, net, liquid, funds, fundsIncluded };
 }
 
 function snapshotDateExists(dateStr, excludeId) {
@@ -3009,16 +3023,6 @@ function accountsAsOf(dateStr) {
 function toggleSnapshot(snapId) {
   const key = 'snap-' + snapId;
   config.collapsedSections[key] = !config.collapsedSections[key];
-  saveConfig();
-  render();
-}
-
-// Collapse or expand every snapshot at once — drives the "Expand all" /
-// "Collapse all" button above the snapshot list.
-function toggleAllSnapshots(collapse) {
-  state.assets.forEach(snap => {
-    config.collapsedSections['snap-' + snap.id] = collapse;
-  });
   saveConfig();
   render();
 }
@@ -4527,6 +4531,16 @@ function renderAccounts() {
     </div>
   `;
 
+  const fundsToggleRow = state.autoFunds.length > 0 ? `
+    <div class="funds-toggle-row">
+      <span class="funds-toggle-label">Include Funds</span>
+      <div class="plan-view-toggle">
+        <button class="plan-view-btn ${!config.includeFundsInNetWorth ? 'active' : ''}" data-action="set-funds-in-net" data-value="false">Off</button>
+        <button class="plan-view-btn ${config.includeFundsInNetWorth ? 'active' : ''}" data-action="set-funds-in-net" data-value="true">On</button>
+      </div>
+    </div>
+  ` : '';
+
   const heroChart = `
     <div class="assets-hero">
       <div class="hero-label">Net worth · ${escapeHtml(formatDateShort(latest.date))}</div>
@@ -4537,6 +4551,7 @@ function renderAccounts() {
       ${lastDelta !== null ? `<div class="assets-delta-sub ${lastDeltaClass}">${lastDeltaStr}</div>` : ''}
       ${rangedSnaps.length >= 2 ? buildNetWorthChart(rangedSnaps) : `<div class="chart-hint">${snaps.length < 2 ? 'Add at least one more snapshot to see your trend chart.' : 'Not enough snapshots in this range yet — try a wider one.'}</div>`}
       <div class="range-pills">${rangePills}</div>
+      ${fundsToggleRow}
     </div>
   `;
 
@@ -4572,8 +4587,6 @@ function renderAccounts() {
     `;
     }).join('');
 
-    const snapFundBal = (snap.fundBalance !== null && snap.fundBalance !== undefined) ? snap.fundBalance : null;
-
     const key = 'snap-' + snap.id;
     const collapsed = key in config.collapsedSections ? !!config.collapsedSections[key] : idx !== 0;
     return `
@@ -4607,18 +4620,13 @@ function renderAccounts() {
           <span>Assets <strong class="pos">$${fmt(t.assets)}</strong></span>
           ${t.nonAvailable > 0 ? `<span>Non-Avail <strong style="color:var(--text-dim);">$${fmt(t.nonAvailable)}</strong></span>` : ''}
           <span>Liabilities <strong class="neg">$${fmt(t.liabilities)}</strong></span>
-          ${snapFundBal !== null && snapFundBal > 0 ? `<span>Funds <strong style="color:var(--warn);">$${fmt(snapFundBal)}</strong></span>` : ''}
+          ${t.funds > 0 ? `<span>Funds <strong style="color:var(--warn);">$${fmt(t.funds)}</strong> <span style="color:var(--text-faint);font-size:10px;">${t.fundsIncluded ? '(in net)' : '(not counted)'}</span></span>` : ''}
           <span class="snap-foot-net">Net <strong class="${t.net < 0 ? 'neg' : 'pos'}">$${fmt(t.net)}</strong></span>
         </div>
       </div>
     `;
   }).join('');
 
-  const allCollapsed = snaps.every((s, i) => {
-    const key = 'snap-' + s.id;
-    const isLatest = i === snaps.length - 1;
-    return key in config.collapsedSections ? config.collapsedSections[key] : !isLatest;
-  });
   const snapshotsSectionCollapsed = !!config.collapsedSections['snapshots-section'];
   return `
     ${stickyBar}
@@ -4634,7 +4642,6 @@ function renderAccounts() {
         <h2 class="group-title">Snapshots</h2>
       </div>
       <div class="assets-list-actions">
-        <button class="btn-secondary" data-action="toggle-all-snapshots" data-collapse="${allCollapsed ? 'false' : 'true'}">${allCollapsed ? 'Expand all' : 'Collapse all'}</button>
         <button class="btn-secondary" data-action="add-snapshot">+ New snapshot</button>
       </div>
     </div>
@@ -5006,10 +5013,14 @@ function attachViewHandlers() {
       else if (action === 'restore-account') restoreAccount(ds.acctId);
       else if (action === 'hard-delete-account') hardDeleteAccount(ds.acctId);
       else if (action === 'toggle-snapshot') toggleSnapshot(ds.snapId);
-      else if (action === 'toggle-all-snapshots') toggleAllSnapshots(ds.collapse === 'true');
       else if (action === 'toggle-section') toggleSection(ds.sectionKey);
       else if (action === 'set-chart-range') {
         config.accountsChartRange = ds.range;
+        saveConfig();
+        render();
+      }
+      else if (action === 'set-funds-in-net') {
+        config.includeFundsInNetWorth = ds.value === 'true';
         saveConfig();
         render();
       }
