@@ -1969,7 +1969,7 @@ function migrateState() {
   Object.values(state.plans).forEach(ensurePlanShape);
 }
 
-let config = { clientId: '', theme: 'matcha', collapsedSections: {}, accountsChartRange: 'all', includeFundsInNetWorth: false };
+let config = { clientId: '', theme: 'matcha', collapsedSections: {}, accountsChartRange: 'all', excludeFundsFromNetWorth: false };
 let chartHoverState = null; // data for the net worth trend chart's hover tooltip, set fresh by buildNetWorthChart()
 let activeMonth = currentMonthKey();
 let activeTab = 'dashboard';
@@ -2383,7 +2383,10 @@ function loadLocal() {
     const raw = localStorage.getItem(CONFIG_KEY);
     if (raw) {
       const loaded = JSON.parse(raw);
-      config = { clientId: '', theme: 'matcha', collapsedSections: {}, accountsChartRange: 'all', includeFundsInNetWorth: false, ...loaded };
+      config = { clientId: '', theme: 'matcha', collapsedSections: {}, accountsChartRange: 'all', excludeFundsFromNetWorth: false, ...loaded };
+      // Migrate the old add-funds toggle (removed — it double-counted money
+      // already sitting inside an account) to the new subtract-based one.
+      delete config.includeFundsInNetWorth;
       if (!config.collapsedSections || typeof config.collapsedSections !== 'object') {
         config.collapsedSections = {};
       }
@@ -2777,19 +2780,18 @@ function snapshotTotals(snap) {
     else if (acct.category === 'nonAvailable') nonAvailable += amt;
     else assets += amt;
   });
-  // Sinking funds are tracked separately from accounts (they're typically
-  // money already sitting inside one of the accounts above, just
-  // earmarked for something), so they're excluded from net worth by
-  // default to avoid double-counting. The toggle on the Accounts tab lets
-  // you opt in if your funds represent money that isn't already reflected
-  // in an account balance.
+  // Sinking fund money is already physically inside one of the accounts
+  // above (it's just mentally earmarked for something) — so it's already
+  // counted once in the totals above. The toggle on the Accounts tab lets
+  // you optionally SUBTRACT that committed amount to see what's actually
+  // free/uncommitted, rather than adding it (which would double-count it).
   const funds = (snap.fundBalance !== null && snap.fundBalance !== undefined) ? snap.fundBalance : 0;
-  const fundsIncluded = !!config.includeFundsInNetWorth;
-  const fundsAdd = fundsIncluded ? funds : 0;
-  const net = assets + nonAvailable - liabilities + fundsAdd;
-  // Available = liquid assets minus liabilities (non-available excluded; funds included only if toggled on).
-  const liquid = assets - liabilities + fundsAdd;
-  return { assets, nonAvailable, liabilities, net, liquid, funds, fundsIncluded };
+  const fundsExcluded = !!config.excludeFundsFromNetWorth;
+  const fundsAdj = fundsExcluded ? -funds : 0;
+  const net = assets + nonAvailable - liabilities + fundsAdj;
+  // Available = liquid assets minus liabilities (non-available excluded; funds subtracted only if toggled on).
+  const liquid = assets - liabilities + fundsAdj;
+  return { assets, nonAvailable, liabilities, net, liquid, funds, fundsExcluded };
 }
 
 function snapshotDateExists(dateStr, excludeId) {
@@ -4601,10 +4603,10 @@ function renderAccounts() {
 
   const fundsToggleRow = state.autoFunds.length > 0 ? `
     <div class="funds-toggle-row">
-      <span class="funds-toggle-label">Include Funds</span>
+      <span class="funds-toggle-label">Subtract Committed Funds</span>
       <div class="plan-view-toggle">
-        <button class="plan-view-btn ${!config.includeFundsInNetWorth ? 'active' : ''}" data-action="set-funds-in-net" data-value="false">Off</button>
-        <button class="plan-view-btn ${config.includeFundsInNetWorth ? 'active' : ''}" data-action="set-funds-in-net" data-value="true">On</button>
+        <button class="plan-view-btn ${!config.excludeFundsFromNetWorth ? 'active' : ''}" data-action="set-funds-in-net" data-value="false">Off</button>
+        <button class="plan-view-btn ${config.excludeFundsFromNetWorth ? 'active' : ''}" data-action="set-funds-in-net" data-value="true">On</button>
       </div>
     </div>
   ` : '';
@@ -4688,7 +4690,7 @@ function renderAccounts() {
           <span>Assets <strong class="pos">$${fmt(t.assets)}</strong></span>
           ${t.nonAvailable > 0 ? `<span>Non-Avail <strong style="color:var(--text-dim);">$${fmt(t.nonAvailable)}</strong></span>` : ''}
           <span>Liabilities <strong class="neg">$${fmt(t.liabilities)}</strong></span>
-          ${t.funds > 0 ? `<span>Funds <strong style="color:var(--warn);">$${fmt(t.funds)}</strong> <span style="color:var(--text-faint);font-size:10px;">${t.fundsIncluded ? '(in net)' : '(not counted)'}</span></span>` : ''}
+          ${t.funds > 0 ? `<span>Funds <strong style="color:var(--warn);">$${fmt(t.funds)}</strong> <span style="color:var(--text-faint);font-size:10px;">${t.fundsExcluded ? '(subtracted)' : '(not subtracted)'}</span></span>` : ''}
           <span class="snap-foot-net">Net <strong class="${t.net < 0 ? 'neg' : 'pos'}">$${fmt(t.net)}</strong></span>
         </div>
       </div>
@@ -5088,7 +5090,7 @@ function attachViewHandlers() {
         render();
       }
       else if (action === 'set-funds-in-net') {
-        config.includeFundsInNetWorth = ds.value === 'true';
+        config.excludeFundsFromNetWorth = ds.value === 'true';
         saveConfig();
         render();
       }
