@@ -529,6 +529,14 @@
   [data-theme="daylight"] .form-select { color-scheme: light; }
   .form-input:focus,
   .form-select:focus { border-color: var(--accent); }
+  /* iOS Safari can render a date input's internal value box wider than
+     the element itself, which spills the text past the right edge.
+     Stripping the native appearance forces it to respect our width. */
+  input[type="date"].form-input {
+    -webkit-appearance: none;
+    appearance: none;
+    text-align: left;
+  }
   .amount-input {
     font-family: var(--mono-font); font-size: 32px; font-weight: 500;
     text-align: center; letter-spacing: 0.02em;
@@ -584,6 +592,7 @@
     cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
   }
   .btn-secondary:hover { color: var(--text); border-color: var(--border-bright); }
+  .btn-secondary.btn-sm { padding: 5px 10px; font-size: 11px; }
   .btn-danger {
     background: rgba(255, 94, 94, 0.1); color: var(--danger);
     border: 1px solid rgba(255, 94, 94, 0.3);
@@ -1140,21 +1149,37 @@
 
   .assets-hero {
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 20px; padding: 24px; margin-bottom: 16px;
-    display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; align-items: center;
+    border-radius: 20px; padding: 24px; margin-bottom: 24px;
     position: relative; overflow: hidden;
   }
+  .net-worth-sticky {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 40;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: var(--bg-card); border-bottom: 1px solid var(--border);
+    padding: 12px 16px calc(12px + env(safe-area-inset-top)) 16px;
+    padding-top: max(12px, env(safe-area-inset-top));
+    transform: translateY(-100%); opacity: 0;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    pointer-events: none;
+  }
+  .net-worth-sticky.visible { transform: translateY(0); opacity: 1; pointer-events: auto; }
+  .net-worth-sticky-label {
+    font-family: var(--mono-font); font-size: 11px; color: var(--text-faint);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .net-worth-sticky-value { font-family: var(--mono-font); font-size: 16px; font-weight: 600; }
+  .net-worth-sticky-value.negative { color: var(--danger); }
+  .net-worth-sticky-delta { font-family: var(--mono-font); font-size: 12px; }
+  .net-worth-sticky-delta.pos { color: var(--good); }
+  .net-worth-sticky-delta.neg { color: var(--danger); }
   .assets-hero::before {
     content: ''; position: absolute; top: -40%; right: -10%;
     width: 320px; height: 320px;
     background: radial-gradient(circle, rgba(var(--accent-rgb), 0.10) 0%, transparent 70%);
     pointer-events: none;
   }
-  @media (max-width: 720px) {
-    .assets-hero { grid-template-columns: 1fr; gap: 18px; }
-  }
   .assets-net {
-    font-family: var(--mono-font); font-size: 44px; font-weight: 600;
+    font-family: var(--mono-font); font-size: 40px; font-weight: 600;
     letter-spacing: -0.01em; margin: 6px 0; line-height: 1;
   }
   .assets-net.negative { color: var(--danger); }
@@ -1162,56 +1187,63 @@
   .assets-delta.pos { color: var(--good); }
   .assets-delta.neg { color: var(--danger); }
   .assets-delta.muted { color: var(--text-faint); }
-  .assets-hero-side { display: flex; flex-direction: column; gap: 2px; }
-  .assets-stat {
-    display: flex; justify-content: space-between; align-items: baseline;
-    padding: 10px 0; border-bottom: 1px solid var(--border);
+  .assets-delta-sub {
+    font-family: var(--mono-font); font-size: 11px; color: var(--text-faint);
+    margin-top: 3px;
   }
-  .assets-stat:last-child { border-bottom: none; }
-  .assets-stat-label { font-size: 13px; color: var(--text-dim); }
-  .assets-stat-value { font-family: var(--mono-font); font-size: 15px; font-weight: 500; }
-  .assets-stat-value.pos { color: var(--good); }
-  .assets-stat-value.neg { color: var(--danger); }
+  .assets-delta-sub.pos { color: var(--good); opacity: 0.8; }
+  .assets-delta-sub.neg { color: var(--danger); opacity: 0.8; }
+  .assets-hero .chart-wrap, .assets-hero .chart-hint { margin-top: 16px; }
 
-  .assets-chart-card {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 20px; padding: 20px 20px 12px; margin-bottom: 28px;
+  .range-pills {
+    display: flex; gap: 4px; justify-content: center;
+    margin-top: 14px; position: relative; z-index: 1;
   }
-  .assets-chart-head {
-    display: flex; justify-content: space-between; align-items: baseline;
-    margin-bottom: 12px;
+  .range-pill {
+    background: none; border: none; color: var(--text-faint);
+    font-family: var(--mono-font); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.04em; padding: 7px 14px; border-radius: 20px;
+    cursor: pointer; transition: all 0.15s;
   }
+  .range-pill:hover { color: var(--text-dim); }
+  .range-pill.active { background: var(--bg-elevated); color: var(--accent); }
+
   .assets-chart { width: 100%; height: auto; display: block; }
-  .chart-grid { stroke: var(--border); stroke-width: 1; }
   .chart-zero { stroke: var(--border-bright); stroke-width: 1; stroke-dasharray: 3 3; }
   .chart-axis-label {
     fill: var(--text-faint); font-family: var(--mono-font); font-size: 10px;
   }
-  .chart-area { fill: rgba(var(--accent-rgb), 0.10); stroke: none; }
+  .chart-area { fill: rgba(var(--accent-rgb), 0.12); stroke: none; }
   .chart-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
   .chart-line-net { stroke: var(--accent); stroke-width: 2.5; }
-  .chart-line-assets { stroke: var(--good); stroke-width: 1.5; opacity: 0.65; stroke-dasharray: 4 3; }
-  .chart-line-liab { stroke: var(--danger); stroke-width: 1.5; opacity: 0.65; stroke-dasharray: 4 3; }
-  .chart-line-avail { stroke: var(--warn); stroke-width: 2; stroke-dasharray: 6 3; }
   .chart-dot { fill: var(--accent); stroke: var(--bg-card); stroke-width: 1.5; }
-  .chart-legend {
-    display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;
-    margin-top: 8px; padding-top: 10px;
+
+  /* Hover crosshair + tooltip on the net worth trend chart */
+  .chart-wrap { position: relative; }
+  .assets-chart { touch-action: none; cursor: crosshair; }
+  .chart-hoverline { stroke: var(--text-faint); stroke-width: 1; stroke-dasharray: 3 3; transition: opacity 0.1s; pointer-events: none; }
+  .chart-hoverdot { stroke: var(--bg-card); stroke-width: 1.5; transition: opacity 0.1s; pointer-events: none; }
+  .chart-hoverdot.dot-net { fill: var(--accent); }
+  .chart-tooltip {
+    position: absolute; top: 0; left: 0; z-index: 5;
+    background: var(--bg-elevated); border: 1px solid var(--border-bright);
+    border-radius: 10px; padding: 10px 12px;
+    font-family: var(--mono-font); font-size: 12px;
+    pointer-events: none; transition: opacity 0.1s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    white-space: nowrap;
   }
-  .chart-legend-item {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-family: var(--mono-font); font-size: 11px; color: var(--text-dim);
+  .chart-tooltip-date {
+    font-family: var(--body-font); font-size: 11px; font-weight: 600;
+    color: var(--text); margin-bottom: 4px;
   }
-  .chart-legend-swatch { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
-  .chart-legend-swatch.sw-net { background: var(--accent); height: 4px; }
-  .chart-legend-swatch.sw-assets { background: var(--good); }
-  .chart-legend-swatch.sw-liab { background: var(--danger); }
-  .chart-legend-swatch.sw-avail { background: var(--warn); }
+  .chart-tooltip-row { color: var(--text-dim); }
+  .chart-tooltip-row strong { color: var(--text); margin-left: 6px; }
   .chart-hint, .snap-empty {
     color: var(--text-faint); font-size: 13px; text-align: center; padding: 24px 8px;
   }
 
-  .assets-list-header { margin-top: 4px; align-items: center; }
+  .assets-list-header { margin-top: 4px; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
   .assets-list-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .snap-toggle { flex-shrink: 0; }
   .snap-body { border-bottom: none; }
@@ -1234,6 +1266,7 @@
     border-radius: 8px; padding: 7px 10px; color: var(--text);
     font-family: var(--mono-font); font-size: 13px; outline: none; color-scheme: dark;
   }
+  .snap-date-input { -webkit-appearance: none; appearance: none; max-width: 100%; }
   [data-theme="daylight"] .snap-date-input,
   [data-theme="daylight"] .snap-label-input { color-scheme: light; }
   .snap-label-input { font-family: var(--body-font); min-width: 140px; }
@@ -1249,31 +1282,28 @@
 
   .snap-entries { padding: 8px 18px; }
   .entry-row {
-    display: grid; grid-template-columns: 1fr 130px 130px 32px;
-    gap: 10px; align-items: center; padding: 6px 0;
+    display: grid; grid-template-columns: 1fr 120px 130px;
+    gap: 10px; align-items: center; padding: 8px 0;
+    border-bottom: 1px solid var(--border);
   }
+  .entry-row:last-child { border-bottom: none; }
   .entry-row-head {
     font-family: var(--mono-font); font-size: 9px; color: var(--text-faint);
-    text-transform: uppercase; letter-spacing: 0.12em; padding-bottom: 2px;
+    text-transform: uppercase; letter-spacing: 0.12em; padding-bottom: 6px;
+    border-bottom: none;
   }
+  .entry-acct-label { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .entry-acct-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .entry-acct-last4 { color: var(--text-faint); font-family: var(--mono-font); font-size: 11px; }
   .entry-amount.is-liab { color: var(--danger); }
   .entry-amount.is-asset { color: var(--good); }
   .entry-amount.is-locked { color: var(--text-dim); }
   @media (max-width: 720px) {
-    .entry-row { grid-template-columns: 1fr 1fr 28px; }
-    .entry-row .entry-name { grid-column: 1 / 3; grid-row: 1; }
-    .entry-row .plan-row-delete { grid-column: 3 / 4; grid-row: 1; }
-    .entry-row .entry-type { grid-column: 1 / 2; grid-row: 2; }
-    .entry-row .entry-amount { grid-column: 2 / 4; grid-row: 2; }
+    .entry-row { grid-template-columns: 1fr 90px; }
+    .entry-row .acct-cat-badge-sm { grid-column: 1 / 2; grid-row: 2; justify-self: start; }
+    .entry-row .entry-amount { grid-column: 2 / 3; grid-row: 2; }
     .entry-row-head { display: none; }
   }
-  .snap-add-row { display: flex; gap: 8px; padding: 8px 18px 14px; border-top: 1px dashed var(--border); }
-  .entry-add-btn {
-    background: var(--bg-elevated); border: 1px solid var(--border);
-    border-radius: 8px; padding: 8px 14px; color: var(--text-dim);
-    font-family: var(--body-font); font-size: 12px; cursor: pointer; transition: all 0.15s;
-  }
-  .entry-add-btn:hover { color: var(--text); border-color: var(--border-bright); }
   .snap-foot {
     display: flex; gap: 18px; flex-wrap: wrap;
     padding: 12px 18px; background: var(--bg-elevated);
@@ -1284,6 +1314,87 @@
   .snap-foot .pos { color: var(--good); }
   .snap-foot .neg { color: var(--danger); }
   .snap-foot-net { margin-left: auto; }
+
+  /* ============================================================
+     ACCOUNTS — management cards, institution badges, category chips
+     ============================================================ */
+  .inst-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 10px; color: #fff; font-family: var(--mono-font);
+    font-weight: 700; flex-shrink: 0; letter-spacing: -0.02em;
+    text-transform: uppercase;
+  }
+  .inst-badge-logo {
+    object-fit: contain; background: #fff; padding: 3px;
+    border: 1px solid var(--border);
+  }
+  .acct-cat-badge {
+    font-family: var(--mono-font); font-size: 9px; text-transform: uppercase;
+    letter-spacing: 0.08em; padding: 3px 8px; border-radius: 20px;
+    border: 1px solid var(--border-bright); white-space: nowrap;
+  }
+  .acct-cat-badge.is-asset { color: var(--good); border-color: var(--good); background: rgba(79, 212, 158, 0.08); }
+  .acct-cat-badge.is-liab { color: var(--danger); border-color: var(--danger); background: rgba(255, 94, 94, 0.08); }
+  .acct-cat-badge.is-locked { color: var(--text-dim); }
+  .acct-cat-badge-sm { padding: 2px 7px; font-size: 8px; justify-self: start; }
+  .acct-empty { margin-bottom: 28px; }
+
+  .inst-picker { display: flex; align-items: center; gap: 10px; }
+  .inst-preview { display: inline-flex; flex-shrink: 0; }
+
+  /* Grouped account cards (Cash / Investments / Real Estate / Liabilities) */
+  .acct-group-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+  .acct-group-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden;
+  }
+  .acct-group-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+  }
+  .acct-group-name { font-size: 15px; font-weight: 600; }
+  .acct-group-delta {
+    font-family: var(--mono-font); font-size: 11px; margin-top: 2px;
+  }
+  .acct-group-delta.pos { color: var(--good); }
+  .acct-group-delta.neg { color: var(--danger); }
+  .acct-group-total { font-family: var(--mono-font); font-size: 17px; font-weight: 600; }
+  .acct-group-total.pos { color: var(--text); }
+  .acct-group-total.neg { color: var(--danger); }
+  .acct-group-rows { display: flex; flex-direction: column; }
+  .acct-row {
+    display: flex; align-items: center; gap: 12px; padding: 12px 18px;
+    border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s;
+    min-width: 0;
+  }
+  .acct-row:last-child { border-bottom: none; }
+  .acct-row:hover { background: var(--bg-elevated); }
+  .acct-row-info { flex: 1; min-width: 0; }
+  .acct-row-name {
+    font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .acct-row-meta {
+    font-family: var(--mono-font); font-size: 11px; color: var(--text-faint); margin-top: 2px;
+  }
+  .acct-row-side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
+  .acct-row-balance { font-family: var(--mono-font); font-size: 14px; font-weight: 600; }
+  .acct-row-balance.pos { color: var(--text); }
+  .acct-row-balance.neg { color: var(--danger); }
+  .acct-row-updated { font-family: var(--mono-font); font-size: 10px; color: var(--text-faint); }
+
+  .acct-removed-section { margin-top: 4px; }
+  .acct-removed-toggle {
+    background: none; border: none; color: var(--text-faint);
+    font-family: var(--mono-font); font-size: 11px; letter-spacing: 0.04em;
+    cursor: pointer; padding: 8px 4px; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .acct-removed-toggle:hover { color: var(--text-dim); }
+  .acct-removed-toggle svg { transition: transform 0.2s; flex-shrink: 0; }
+  .acct-removed-toggle.collapsed svg { transform: rotate(-90deg); }
+  .acct-row-removed { cursor: default; opacity: 0.75; }
+  .acct-row-removed:hover { background: none; }
+  .acct-row-removed-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .acct-row-removed-actions .icon-btn { font-size: 13px; padding: 5px 7px; }
 
   /* ============================================================
      SINKING FUNDS
@@ -1460,7 +1571,7 @@
     <button class="tab" data-tab="transactions">Transactions</button>
     <button class="tab" data-tab="plan">Plan</button>
     <button class="tab" data-tab="funds">Funds</button>
-    <button class="tab" data-tab="assets">Assets</button>
+    <button class="tab" data-tab="accounts">Accounts</button>
   </div>
   <div class="tabs-mobile">
     <select class="tabs-mobile-select" id="tabs-mobile-select">
@@ -1468,7 +1579,7 @@
       <option value="transactions">Transactions</option>
       <option value="plan">Plan</option>
       <option value="funds">Funds</option>
-      <option value="assets">Assets</option>
+      <option value="accounts">Accounts</option>
     </select>
   </div>
 
@@ -1487,7 +1598,7 @@
 // ============================================================
 //  APP VERSION
 // ============================================================
-const APP_VERSION = '5.1.2';
+const APP_VERSION = '5.3.0';
 
 // ============================================================
 //  STATE & DEFAULTS
@@ -1694,6 +1805,7 @@ let state = {
   plans: {},
   transactions: {},
   assets: [],
+  accounts: [],
   autoFunds: [],
   updatedAt: 0,
 };
@@ -1746,7 +1858,36 @@ function ensurePlanShape(plan) {
   if (t.manualOverride === undefined) t.manualOverride = null;
 }
 
-// Normalize an assets snapshot to the v4 shape.
+// Normalize an account definition (name, type, institution, last4, category).
+function ensureAccountShape(acct) {
+  if (!acct.id) acct.id = 'acct-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+  if (typeof acct.name !== 'string') acct.name = '';
+  if (!ACCOUNT_TYPES.some(t => t.id === acct.type)) acct.type = 'other';
+  if (typeof acct.institutionId !== 'string' || !acct.institutionId) acct.institutionId = 'custom';
+  if (typeof acct.institutionCustom !== 'string') acct.institutionCustom = '';
+  if (typeof acct.last4 !== 'string') acct.last4 = String(acct.last4 || '').slice(0, 4);
+  if (acct.category !== 'asset' && acct.category !== 'liability' && acct.category !== 'nonAvailable') {
+    acct.category = accountTypeInfo(acct.type).defaultCategory;
+  }
+  // The date this account was added — snapshots dated before this are
+  // treated as "the account didn't exist yet" and won't show it as a row,
+  // so a brand-new account never appears to retroactively show up (or show
+  // a misleading $0) in your history from before you opened it.
+  if (typeof acct.dateAdded !== 'string' || !acct.dateAdded) {
+    acct.dateAdded = new Date().toISOString().slice(0, 10);
+  }
+  // The date this account was removed, or null if it's still active.
+  // Removing an account with snapshot history archives it as of this date
+  // rather than deleting it outright — it disappears from new snapshots
+  // and the active account list, but keeps its label and recorded amounts
+  // in every snapshot up through this date.
+  if (typeof acct.deletedDate !== 'string') acct.deletedDate = null;
+}
+
+// Normalize an accounts snapshot to the v6 shape. Each entry now references
+// a persistent account (by id) rather than carrying its own freeform
+// name/type — the account definition is the single source of truth for
+// those, so a balance always stays tied to the account it belongs to.
 function ensureSnapshotShape(snap) {
   if (!snap.id) snap.id = 'snap-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
   if (!snap.date) snap.date = new Date().toISOString().slice(0, 10);
@@ -1754,8 +1895,6 @@ function ensureSnapshotShape(snap) {
   if (!Array.isArray(snap.entries)) snap.entries = [];
   snap.entries.forEach(e => {
     if (!e.id) e.id = 'ent-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
-    if (typeof e.name !== 'string') e.name = '';
-    if (e.type !== 'asset' && e.type !== 'liability' && e.type !== 'nonAvailable') e.type = 'asset';
     if (typeof e.amount !== 'number') e.amount = parseFloat(e.amount) || 0;
   });
   // fundBalance is captured at snapshot time for accurate historical Available tracking.
@@ -1774,6 +1913,49 @@ function migrateState() {
   if (!state.transactions) state.transactions = {};
   // v3 -> v4: assets snapshots.
   if (!Array.isArray(state.assets)) state.assets = [];
+  // v5 -> v6: promote each snapshot's freeform named entries into a
+  // persistent Accounts list, one-time, before entries lose their name/type
+  // fields. Entries are matched to accounts by name (case-insensitive) so
+  // repeated entries across snapshots collapse into a single account.
+  if (!Array.isArray(state.accounts)) {
+    state.accounts = [];
+    const byName = new Map();
+    state.assets.forEach(snap => {
+      (snap.entries || []).forEach(e => {
+        const key = (e.name || '').trim().toLowerCase() || 'account';
+        if (!byName.has(key)) {
+          const acct = {
+            id: 'acct-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+            name: e.name || 'Account',
+            type: 'other',
+            institutionId: 'custom',
+            institutionCustom: '',
+            last4: '',
+            category: e.type === 'liability' ? 'liability' : e.type === 'nonAvailable' ? 'nonAvailable' : 'asset',
+            // Backdate to this snapshot's date (the earliest one it appears
+            // in, since snapshots are processed oldest-first below) so
+            // migrated accounts show up across all the history they were
+            // actually part of, not just from today forward.
+            dateAdded: snap.date,
+          };
+          ensureAccountShape(acct);
+          state.accounts.push(acct);
+          byName.set(key, acct);
+        }
+        e.accountId = byName.get(key).id;
+      });
+    });
+    // state.assets isn't guaranteed to be stored in date order, so make a
+    // second pass to pull each account's dateAdded down to the true
+    // earliest snapshot date it appears in.
+    state.assets.forEach(snap => {
+      (snap.entries || []).forEach(e => {
+        const acct = state.accounts.find(a => a.id === e.accountId);
+        if (acct && snap.date < acct.dateAdded) acct.dateAdded = snap.date;
+      });
+    });
+  }
+  state.accounts.forEach(ensureAccountShape);
   state.assets.forEach(ensureSnapshotShape);
   // v4 -> v5: sinking funds.
   if (!Array.isArray(state.autoFunds)) state.autoFunds = [];
@@ -1782,7 +1964,8 @@ function migrateState() {
   Object.values(state.plans).forEach(ensurePlanShape);
 }
 
-let config = { clientId: '', theme: 'matcha', collapsedSections: {} };
+let config = { clientId: '', theme: 'matcha', collapsedSections: {}, accountsChartRange: 'all' };
+let chartHoverState = null; // data for the net worth trend chart's hover tooltip, set fresh by buildNetWorthChart()
 let activeMonth = currentMonthKey();
 let activeTab = 'dashboard';
 let editFundId = null;
@@ -1806,6 +1989,187 @@ function monthLabel(key) {
 }
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ============================================================
+//  ACCOUNTS — reference data
+// ============================================================
+// Each account type carries a suggested default category (asset /
+// liability / nonAvailable) applied when the type is picked, but the
+// category select always stays editable independently.
+const ACCOUNT_TYPES = [
+  { id: 'checking',      label: 'Checking',            defaultCategory: 'asset' },
+  { id: 'savings',       label: 'Savings',              defaultCategory: 'asset' },
+  { id: 'money-market',  label: 'Money Market',         defaultCategory: 'asset' },
+  { id: 'cd',            label: 'Certificate of Deposit', defaultCategory: 'asset' },
+  { id: 'credit-card',   label: 'Credit Card',          defaultCategory: 'liability' },
+  { id: 'brokerage',     label: 'Brokerage',            defaultCategory: 'asset' },
+  { id: 'roth-ira',      label: 'Roth IRA',             defaultCategory: 'nonAvailable' },
+  { id: 'traditional-ira', label: 'Traditional IRA',    defaultCategory: 'nonAvailable' },
+  { id: '401k',          label: '401(k)',               defaultCategory: 'nonAvailable' },
+  { id: '403b',          label: '403(b)',               defaultCategory: 'nonAvailable' },
+  { id: 'hsa',           label: 'HSA',                  defaultCategory: 'nonAvailable' },
+  { id: 'crypto',        label: 'Cryptocurrency',       defaultCategory: 'asset' },
+  { id: 'real-estate',   label: 'Real Estate',          defaultCategory: 'nonAvailable' },
+  { id: 'vehicle',       label: 'Vehicle',              defaultCategory: 'nonAvailable' },
+  { id: 'mortgage',      label: 'Mortgage',             defaultCategory: 'liability' },
+  { id: 'auto-loan',     label: 'Auto Loan',            defaultCategory: 'liability' },
+  { id: 'student-loan',  label: 'Student Loan',         defaultCategory: 'liability' },
+  { id: 'personal-loan', label: 'Personal Loan',        defaultCategory: 'liability' },
+  { id: 'other',         label: 'Other',                defaultCategory: 'asset' },
+];
+
+// Curated institutions rendered as colored monogram badges (no external
+// logo images — keeps things fast, offline-safe, and theme-consistent).
+const INSTITUTIONS = [
+  { id: 'chase',        name: 'Chase',                         initials: 'CH', color: '#0a5eb5' },
+  { id: 'bofa',         name: 'Bank of America',                initials: 'BA', color: '#c41230' },
+  { id: 'wells',        name: 'Wells Fargo',                    initials: 'WF', color: '#c40404' },
+  { id: 'citi',         name: 'Citibank',                       initials: 'CI', color: '#003b70' },
+  { id: 'capone',       name: 'Capital One',                    initials: 'C1', color: '#a12034' },
+  { id: 'usbank',       name: 'US Bank',                        initials: 'US', color: '#0c2074' },
+  { id: 'pnc',          name: 'PNC Bank',                       initials: 'PN', color: '#f47a20' },
+  { id: 'td',           name: 'TD Bank',                        initials: 'TD', color: '#54b948' },
+  { id: 'truist',       name: 'Truist',                         initials: 'TR', color: '#5b2f8e' },
+  { id: 'ally',         name: 'Ally Bank',                      initials: 'AL', color: '#5c2d91' },
+  { id: 'discover',     name: 'Discover',                       initials: 'DI', color: '#ff6600' },
+  { id: 'amex',         name: 'American Express',               initials: 'AX', color: '#016fd0' },
+  { id: 'schwab',       name: 'Charles Schwab',                 initials: 'CS', color: '#00a0df' },
+  { id: 'fidelity',     name: 'Fidelity',                       initials: 'FI', color: '#4c9c2e' },
+  { id: 'vanguard',     name: 'Vanguard',                       initials: 'VG', color: '#96151d' },
+  { id: 'etrade',       name: 'E*TRADE',                        initials: 'ET', color: '#6633cc' },
+  { id: 'robinhood',    name: 'Robinhood',                      initials: 'RH', color: '#00c805' },
+  { id: 'sofi',         name: 'SoFi',                           initials: 'SF', color: '#00a1e0' },
+  { id: 'chime',        name: 'Chime',                          initials: 'CM', color: '#1fd15d' },
+  { id: 'marcus',       name: 'Marcus by Goldman Sachs',        initials: 'MG', color: '#5a7fa6' },
+  { id: 'usaa',         name: 'USAA',                           initials: 'UA', color: '#00223e' },
+  { id: 'navyfed',      name: 'Navy Federal Credit Union',      initials: 'NF', color: '#003865' },
+  { id: 'synchrony',    name: 'Synchrony',                      initials: 'SY', color: '#5a2d81' },
+  { id: 'hsbc',         name: 'HSBC',                           initials: 'HS', color: '#db0011' },
+  { id: 'citizens',     name: 'Citizens Bank',                  initials: 'CZ', color: '#003057' },
+  { id: 'regions',      name: 'Regions Bank',                   initials: 'RG', color: '#00754a' },
+  { id: 'bmo',          name: 'BMO',                             initials: 'BM', color: '#00549a' },
+  { id: 'creditunion',  name: 'Local Credit Union',             initials: 'CU', color: '#3a6e16' },
+  { id: 'custom',       name: 'Other / Custom',                 initials: '?',  color: '#5a6262' },
+];
+
+// Groups accounts into the broad buckets shown in the Accounts tab (Cash,
+// Investments, Real Estate, Other Assets, Liabilities) — a coarser view
+// than the 3-way asset/liability/nonAvailable category used for net worth
+// math, but a more useful way to browse your actual accounts.
+const ACCOUNT_TYPE_GROUP = {
+  checking: 'Cash', savings: 'Cash', 'money-market': 'Cash', cd: 'Cash',
+  brokerage: 'Investments', 'roth-ira': 'Investments', 'traditional-ira': 'Investments',
+  '401k': 'Investments', '403b': 'Investments', hsa: 'Investments', crypto: 'Investments',
+  'real-estate': 'Real Estate',
+  vehicle: 'Other Assets', other: 'Other Assets',
+  'credit-card': 'Liabilities', mortgage: 'Liabilities', 'auto-loan': 'Liabilities',
+  'student-loan': 'Liabilities', 'personal-loan': 'Liabilities',
+};
+const ACCOUNT_GROUP_ORDER = ['Cash', 'Investments', 'Real Estate', 'Other Assets', 'Liabilities'];
+function accountGroupName(acct) { return ACCOUNT_TYPE_GROUP[acct.type] || 'Other Assets'; }
+
+// Time-range filters for the net worth trend chart.
+const CHART_RANGES = [
+  { id: '6m', label: '6MO', months: 6 },
+  { id: '1y', label: '1Y', months: 12 },
+  { id: '2y', label: '2Y', months: 24 },
+  { id: '5y', label: '5Y', months: 60 },
+  { id: 'all', label: 'ALL', months: null },
+];
+function chartRangeLabel(rangeId) {
+  const map = { '6m': '6 months', '1y': '1 year', '2y': '2 years', '5y': '5 years', all: 'all time' };
+  return map[rangeId] || 'all time';
+}
+// Subtracts N months from an ISO date string (YYYY-MM-DD), returning an
+// ISO date string. Used to compute the cutoff for a chart range.
+function subtractMonths(dateStr, months) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setMonth(dt.getMonth() - months);
+  return dt.toISOString().slice(0, 10);
+}
+// Filters sorted snapshots down to a chart range, anchored to the most
+// recent snapshot's date (not the real-world "today") — since snapshots
+// here are taken manually and may be weeks apart, anchoring to wall-clock
+// "now" could hide all your data if you haven't snapshotted recently.
+function filterSnapsByRange(sortedSnaps, rangeId) {
+  if (sortedSnaps.length === 0) return [];
+  const range = CHART_RANGES.find(r => r.id === rangeId) || CHART_RANGES[CHART_RANGES.length - 1];
+  if (!range.months) return sortedSnaps;
+  const anchor = sortedSnaps[sortedSnaps.length - 1].date;
+  const cutoff = subtractMonths(anchor, range.months);
+  return sortedSnaps.filter(s => s.date >= cutoff);
+}
+
+// Coarse "how recently" label for an account's last recorded balance.
+// Snapshots only carry a date (no time-of-day), so this reads in days/
+// weeks rather than the hours a fully-synced account tracker might show.
+function relativeDateLabel(dateStr) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [y1, m1, d1] = dateStr.split('-').map(Number);
+  const [y2, m2, d2] = today.split('-').map(Number);
+  const days = Math.round((new Date(y2, m2 - 1, d2) - new Date(y1, m1 - 1, d1)) / 86400000);
+  if (days <= 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days} days ago`;
+  if (days < 31) return `${Math.round(days / 7)}w ago`;
+  return formatDateShort(dateStr);
+}
+function accountTypeInfo(typeId) {
+  return ACCOUNT_TYPES.find(t => t.id === typeId) || ACCOUNT_TYPES[ACCOUNT_TYPES.length - 1];
+}
+
+function institutionInfo(instId) {
+  return INSTITUTIONS.find(i => i.id === instId) || INSTITUTIONS[INSTITUTIONS.length - 1];
+}
+
+// Deterministic color for a freeform custom institution name, so the same
+// typed name always renders the same badge color across snapshots.
+function hashColor(str) {
+  const palette = ['#0a5eb5', '#a12034', '#4c9c2e', '#5c2d91', '#c47a1e', '#00a0df', '#96151d', '#1f7a5c', '#8e3b6b', '#3a6e9e'];
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+  return palette[h % palette.length];
+}
+
+// Renders the small colored monogram badge used everywhere an account's
+// financial institution is referenced (account cards + snapshot rows).
+// Real institution logo images, keyed by institution id, as embedded
+// base64 data URIs — self-contained, no network fetch needed. Falls back
+// to the colored monogram badge for any institution without one uploaded.
+const INSTITUTION_LOGOS = {
+  chase: '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',
+  usaa: 'iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAABMXPacAAA45UlEQVR42u19Z3xVVfb22uW0e9MghITe0khIAiShI10EpYPY2zjFGbujjmMf9T9jmdGxTLMDImKhg1ISuvQSAiE9kAbp9ebee87e6/1wkhASQEAEZ172Lx8COffcc/bae5VnPWttgohwdVy5Qa9OwVUBXBXA1XFVAFcFcHVcFcBVAVwdVwVwVQBXx+Ud/Of/iFJKKREIAADYYTtp+hsCEGCUEkL+SwVAfuZQhESk5zG5UiIh0PwmBOC/RSQ/6x2AiJSQ3QfTV23YJQEosWeVCImIyBgAYufgoDnXj2zn79NyY9j7hlJ6dQdc/BBCMkaXrNsx9zcvmWaLh0QAe3Xbv5hWXGLoJ68+1t7PwRglQCRixw4BqqIg4s9/H/xMBYAIAGhZYsDUBw9nFhn+PpaQrVR/468ErHqXoikapxQYIQRRdGvv9+ozv7x+dKKUSCm5KoCLMLxIKUnPyY+b9ohJOEGU5/DkKBGIIBAIAAJQhAZLY7BjyRv9o/r8zHXRz/TJJEoA2HUww1PjppTKH7TAQCijjBLGCKPMaO/naTDnfbPeNuNXjfBFjp0H0wGRnKfOIoRSBoCm12pw1wLI+oaGq4HYRRkAAMaYEOL7A+mgqRLleW0a0zKraszK6nY++rXD+mo681r/Bcm+i98BjcbjJ/AzUCKlJK/g5OHsQtA1lHiai0kawzFssmIAjKDVOdB3RHzi9PGDRyb26xLS4fd/fr+6qqaVb/q/IAApUaLkjDXPvCUEJeQSGjpECcD2H87y1LpYuwBpiVbiOU3oSIFKdHu+ePP54Yn9mhfHnx+/29XgAQDG2P+OCpJSUko4YwBQWVVTUVkDAJwxSqmU8lI5VPZdtu47ApLQ0/ecwrmf03H6FyGjFN1mel6hENLj9druv8K5v6/zf0oFISKlNDu/+P3PVqzbfiS/pAoBegT7jRsac8u0sXF9+wCAEOLHrzhGmRBi654M0DSUTQaAIrq8kaFdEvv2+mDRWurvh0KcUkKUr95y4J45E4Fwe38gAPw3BGL8/Nc+IfQ/n69+/JWPaqpdYKjAGQAtq6jauz/rrU/X3DV15AuP3tEpOBAAhJTsYjWSHQHkFpw8kpNPNFXKxsVOCZMe74CI7rMmDv1gwZqWqh0lgqHtSkl3Nbgdhm7vAAJNAfP/ihdECIFPvtpQU+sxOgYyQ6OcU8644VDbB5iK+p+FSQnTHv7X/GXCEoxSIeXFOeC2z7P3UFZDjYtzii2/XsrYiB6DB0Qpvk4hrObplYhU4YVFFakZedjsHfyXjPMWAAEAcDh0olDTsqQEREBEIYUpBEFUOvgWVbvve/rfw2Y9sn7rXkYpJUSIizQMOw4eBXk6uIYSVDUqtEc7f2evbh3AYzarFwRglMoGz/ptKQTAEvJ/UQA2QHaWZY0AliWYQtX2fruOHJ9w5/N3PPLn7LxCxighRFzIjNi6a9fBTFCVZuERAsKU/u2ckX26AcCgmFBwe2kLCy0RQVPXbt0HAKrCL1rwP3cBnNumIUqvRObUqY/P/G+2xk9/5Nk3Pql3uRmjiNiszc+pf5AQUlhcmppZCJoqmkIwQih4PP36dO3WKQgABseFgTxtg0gpmcPYeiBz0p3P7D+SdRGC/9kLAAEAeBOySAihlDQB9M2XUIIgBaJE3t6/2iIv//2LxBkPLFqeZF//gwvT9nm27UurqajlCm++llICpjUioa8NbQ7oG0odijhdohIRuPLtlpShs5946MV/niyrsgUvpPzf2QGAwCillEpLCJdHeLxSAmOsrc8jLEEpKB0C046V3fzgGxNvf3rX/qM/uDDtGd19MAOkOE20CAAyvl+Y/c+osB4hHdujabXakYio+Dm9XHn7o+WJUx/4ePEaQgij9OeskS7MCAtAUVvvra0N8jNiIruG9ezo4GhVVFm1LsoopRSQNGMEiGBZJtM03s5v7bZDI295+qE//bu4pPwcC5NRKiVuPZAJmtKssgiAZQnNz3dgdB8AsCzRzt/Zt3dXrKtXlNZutCUkAeTtA/IrG+554u+jbnps4/b9tuAtIX+GQjjffIB92bDZj/po6gN3Tx/cPzIo0N/tMQuLS7bsSl2wamvythTgiuLUpTjDizJGLYlQVdOlS4dnf3fjr2+7wY7aCKHNCRPZBAFFTXmowUTalOOllAiXJyay+4Flb1JKLSEYY1+t3PiLx/9e6xHMzwlnMjCEEMKoqK0jBO+dPf65h27tGtIBAIVAxuh/nwBsBX3wSHb/Jj3Qany9evPzb312OO0Y8fdjChenAzj2QmacmR4L6uquGRr90qN3XDM4xoaSbFqDnYP8es2W2b99lfv7NmsqzphZWX3nTeM/efUR+xo71Dqccey5Nz79JmknEJX7GFIIPIPgiQSUlTVBwQGP3TXtd3dN83EYtrR+Jpky9sILL5y/CxTSMRABVq37/o0Pl/59wfIvV2/dm5ohLbN7544xfXvfOWu809D2Hsx0VdUyh04oQUTSAo+UUjJGmMORm1fyyZK1x48X94/q0z7A1559BKSUzluStG3HUeZsjoGRMiJdnl/dOjExNlyipJQSQixLhAS1mztl1KCY0PTMnMKcIlQ0ReHyFDUCCKBEAETudNY1WOs37Fq9ZXe3kA4Rvbva30jIlSdPXJgK+n7v4Sde/XDb7gyQAAoDBLBMUGhMeNfH7pl555yJAJCZU/jM3z5ZvGY7UK74OKVNYWhleRiTKLGqskNQ4OP3zvztHdf7OAwhJKVkzC1Pbdp5lPkZsnEHIKEUGtzff/nqoLiI5vyikGLel6snjh3eOai92+N5+6Olr3+4rKy0igX4EUKFEG1XD2XUqneBMKeOT3j+wTtsi2Jvqf+CHYAIlJKbH35t29ZUNTiQaTpVVapT5nBQRT9RUrt0zdbdKRmhPYJjo/rMmXxNQr8+ucdPHM8qRM6ZyqGVywhAEZjTp85rrV+/Y/n6HcGBftERPatr6//4twVucgrGoYRKr9UlJODFB25WVcWeShvye/PT5X94/l/t2vslxkUOT+w369qh9e6GfYdypNvLdY2Q1msLJTJVoZp29Ej+vGVJ1VU1CTFhToeOiFeQP3FhKuiTb5IKy+uAUUsKiYAI0qboqIwbRnrGsU+XbSwpLUuMDR8QHXrX7AkBfo4DhzNqS6rB0BizZ4TY9oAASCEpI9zpPFFWs3hZcsaxosKTFSuS9zJVhaa5owykyz1mcL87Zo5vpjhIREopIfDBwvXLk/clf7+/d7eOA/qFTZ0w9Jr4yLz84tysY0ikqnGUBFtgcoiASBRD9SLdvvXA4u+2+Dq0AdGhlNIrpZEuTAAff7U2r7CMtgAJml9MouSGLinbufPwF6s3+Wg8MTZiaHzUjZNHmMI8kJJpuizu0AgAtiSwIUgpucKopqccylz//WFm6C1vzhiV9fV3z50wIiFanOI3EEIIAfL+siRqOHLzSuYv3Xi8sCgqrFt8TPhdcyb07h6cmpZbWlCOmsoVjqe7vBKRAjAfZ0W1a/nqbVv3HIns3aVb5yBCiCUEubzW+bxVEAAhZP7S5Lz8krYCaDYnBJA79co694pvt23YdqBHl44DokMnjxk0YWhsXn5RdkY+AnBNbaWR7JsxwwCFQ+s7ExTm47+a3ad7J1sNNiMi/r7OL1ZtOVlSqfo6kNG9e9MWrEgmCPGxYfEx4bfNGEMoHDiU6amuZ44zaiRJGWNOR3Z24SdL1hcVlw6MDvX3cxIA2xr97GwAIeSzZck5xxsFcJYHJFKC/WJ5x0vmLUs6frwwKrRHXHSfO2aND+8Vcvhobml+CWqaojBsK4bT54gQkEL6+ujP3X+zv68DWqgIIQTnfGdKRsrBLKprQkrFadR7cf2G3SuSdwX6OxNiw8ePGDB1XEJpReXh1ByUkusaweaY8pQYuK5KxvbsTFu4apPB6cB+YZwzISXgmTWSLchLpawuTADzvlmfW1CqGjo2AWeMMUopALYJGpBrCij6/v0ZC1YkuRsaEmLD42PC75g5VlXo/pT0hmoXNXRC4BxeGKUUGzwD+vZ45O7pTWqnhRqh9GRZ5ap1O5mhS0QpkVHKnUbxifKvVm7dm5oRHdYtNrLPjddf0y+s29HMvBPHS5Arispla8EjAChOo8blXb1227db9nYODIgI7U6a4HRiOwWIdgB/acnYF2YDPv1mQ27uCcvtQdNDFYamKetcssGLisI5a5xL0mhpEYGg5A6j3is3btq7PGlHB3+fgTHhY4b1nz5+cEVVZcrhbLSA6xo0o54tSYe2Aairn3P9yEmj4oUUrRAnQohlio+WJiPjp/APiUxViKGnpx2ftyy5srIyPiYsITb8rtkTfH20vSnp9RW11NBpG40kJTIGzOksKCpduHxjVm5+dFj3oMAAShsFTwghhFBKS8orKiqr/P18L4nvdGEC+PtHS0zTc/+d1z/129lP/mL63TPGXTO4n49TLywuqy+vJJrGGJEoyalJJPZSZU7nyZLqr1Zu3nXwSESvrnFRfWZNHjkwqld6Rl7RsUJUFa5waFRJLQgohEq353d33RAb2cu+T6vn8XMa85ZtrK13kxa+PCKgRG6oXgnbtx368rut7fyMhNiIEYn9Zlw7pKa2/uDhbOk1VV2F03cuAmmUn26kHMj8eFlyZs4xTVXa+/s6DM3t9hzKOPbx4jV3P/x6jx5dBkaHiktBerwAKEII+fmStSOHDuzRpWOrPx0rOPn6+9/86/NvhZDc1w+laJu4oZQCRVHlchjKA7dPevjeGSFBgW635+1Plr7+4Yqykgoa4EcIkS2xUgSNyIPL3grv3aUtzdYOysbf/scNm1O0DgFer9lmxQBnxNvghQb3+JExLz58+7CEfgCwacfBp/86b9uOI+D04YYiLdF2ChinliWhtgYI7xgS2LGDf53Lc7yoRHpM8Jjz3nvi9uljLSH4j2cgnP8OoJTERoUG+DmLTpat3LDzy++27z6UUVFV197P0Tmkw+QxieOHxRQWl2Sm5yGhiqZIxJY8ZkRECdyheYFs3Xpw8ZptPk5jcP+I4Qn9Zk8aUu+qO3goVzR4uEMniIiEMSI9nqg+XZ++bw4hpO1mt4syOOdrkne4673cUFtZFAJSSKAKpw4tO6to3tKNJ06WxEX1iY3sfdfs8cFB/mlHcyuKylDXOaPY+LSNWxAlMiK5YRBNrXO5S0orq2pcoGq6r0N43JPGDoqP7tN2U/6kRhgBoLS8+k9vL7jv+X/P+zJp8/aU9Zv2f75yy7wVG9Ozjof37DygX9htM8aF9wxJSc0sKzoJms650hx8NetoAqD4OCprGlas2b5ld0rPriEDovpMnTBsTGLfoqKSzKPHkFJF54wQUeeePG7g9AnDzugX2v8TG9lr8vjEwhMlR4/moURV0xBki0CDAAJK4IYmGN+988ii1RtRmPGxkUPjo26fPpoQ2J+S7qmr54YOjc5Ec6qZ2MEmZYwqnHJme2nS5Z5y7eD46NDLKwAASsgtD7360Udr6jWNO3VmaMxpEE2tdZn79h5ZsGKL6fUMiA5NiI24ddpYTVcPpKQ1VLmo4aCktUJCiYwz5tCzc4rmLUk6nl8yILpXbFSf22aN7xbSLvVoTnlRCRgG9Zi/vGVSQkyYjcGd0SxJKTt3DLxl6pi48G5H0vOKj5eiyrnC2/i4SACYr1FTb67bsHP1pn3dO3WIjeo9fuTASaPjT5ZWph3JRGSKpp1RJyM2Y+NUut0zJ4/o37f3ZRWA/bbvLFhZXOPmGrOxX5QoASkjitNwWZictHf5hm3t/X0H9Y8YMzRu2rhBxSdPpqXlogBFV1vSReysDSIyXUWu7NubtnDVZpTWgKg+gwf2vX3GWM7IvgPpnvr65x65tUtIh3P43V7T+uybdZ1CghJiw2+fNVbTMeVwbn1ZNXVojNJWkymlpIxxp09hcflnSzceOpodGdptQFSfm6aMio3skZqWczL/BCoKb4xRsG3CyhbA7OtHnNEv+MkFsOCbDbkFpVRRmpeXTUKTEikF7uM4WV7z9cpNB9JyI/t0i4nsNXfKmLiIbhlZ+YV5J1DjisLO5IMj9zFq3d7163at2LgrsL1PQkz4uOEDJo+Od1vWTVNHO3TtbAIQQigKf/PjVX946R8dgvwTYyNHD+k/+7qh9e76fSnp0iuZoQEgnHpa0oiKqwrR1COpOfOXJbtcDQkxYf2jQ++YMdbQ2IHDWa7KWmo4KKVt60IoJeAxZ0wadrkFYAdiC5dvbI6Ez8BpkEhVRnWftLTceUs2VFVUJ8aFDegXftfs8U6HduBwVl1ZNdE12mjxTtNIlAHzcZ4oqfpq1eaDh9Mje3frHx06/dphDk2FM1ngluGYZXo+Wrh2afKerbsPhffsEtu399QJw4b2j8jLLz6WfQwJVTS1rUYCRO7QPUi3bN7/zdqtvoY6eEDfUUPiZk0cXlZVdSg1A73IdJXSRpIdJUAZZZxbZZXjxsYPig2/AgKYtyQp5/hJpqnNmRbSKuuFElFyQ/MC2b499atvv/dxKolxESMG9Zs5cajXNPenZIlGuBgkYouIAaUEpnCm6kfSjs9fmlxVU5cQ00c/+/I/hcpR8sHyzcTwyc7On7c0uaCwODqiR2JsxD1zru3WKTDlcG5FURnRdcY4oGz5zIiSEuQOR2lF/bI1W3cdPBzWs0tMZK9Z140YFBuWe7zg+LEi6fIgIQiAFkqXW9TWDRnU9/47p3UM9CdnXxk/FRj36dfrcwvKFF2lhFJGKaH2EsDTk/eISAG401FWXbd8zeYN2w706NoxISbshnGDxw2JzcorzM3KQ8K4rraERkkjXIzc0L2UbV+3bcyoAWE9u56z0I4QAr4+zi9Wbyo9WaX5+piU7t2dtnDVFpAyIS48MTbitmmjpZT7UzO9tfW8NfhB7FCRKYw6HBkZBfOWJpWWVcdH9+4fHXrP3ImJ/foQxizTLYF09PcdPqD3i4/c9tfnfh0S1O6SzP6FZcQIIaNv+cOWPRkSABrcjcA+IaBrzNAAUbYhOhBKGKFmbR1j5N6ZYx/79aywXl0BYN5X37303qKs7BLw9+WsdQKLAKDEQF/twLK3ugQHnrtW205p3fPkmx8vWq+085NCUk5Nr4Ta+oFxvZ+9/8bpE0cAwP7DWc+/NX/Fur2gqYrDEEKc/uIUQFLOhZBQVdWta9DT9934y1sn28vL6zWrauocmurTxHevd7mcDscVwILembeiKLdgcGLk3Bmjb542ctTwuO5dO9a76sqKy1Ai11QCeHoRKUgErqvIlT27j3y+cjNKa2BMWEJsxG0zxku09qdkeGtdzKESQiQSWyMxSqTLkxgT+uCdU/CHKuVtD7WkvGrFup3MYQiJUgKlwJx6YXH5Fyu2HknPjonsGRPR6+apY0J7djqSkVOSfxJVlSu8jSkShIDidFTWelau/X7Vpj2MyM4d2/v7+Tgdhqqpbrd3666U3/7x71xT4yJ7W0JcPijCzts9+/oHgwdGTxk/rOXuc7lcy9Z9/9oH3xw4mAM+vqrKLXGG4J5zZnoF1NTGxvR87v6bZk2+BgD2p2a+/N7n33y7C7iq+miWQETkjJkVVQ//avqbz/zqB8N9G57csT9t2Nwnie5s6bdQSoAQUV3nF+C4/+ZrH//13AB/n+q6+rc/WvK3D1dUVbtogIMgbbtxKSGEEsvlAq8ZHBwUH9OnU5BffYN5IP3Y0dxCKKn46P1n7p414ZJAERdCS2mR3MvKLcgvLjV0rWe3kJCg9gDg8Xjf+2TZ6x8tPVFcSQL8GYUzMOAI5YyYLheYYvq4hJd+f0e/iF4AsHj1ppf+vjA17Tj4+nKVA6JVWfPZu4/dMmXsD1Z82LqxuqYu+oYHi0priUJbxN6EgKScWJaA6rrI0O4vPHTL3GmjASA9K/+FtxcsWr0DELifj2ytkQAIUEKBUuExocENUgJQ0LniNGRVzT9eue9XN08SEtnlBOPsV12VtOOdT1duS8mpq6sHQgLb+Q6K7nXLlFG3zRgHAAXFpS+/8/mHX623JDBfBwh5WoUdQUCglBFCrKpaH3/j4TsmP3rvrHb+vnWuhnc+XvLXj1aUl9cQfz8Dcf+yv4b36nI+pe72NWNvfyZ56wEt0N/jtZoTL9ikPBljpqsB3O7JYwc8e/+tQ+KjAGDDtn3P/W3B9l1HwMdH0VVpWW2r8W1WK2k0TEgosSpq/vP6A7+8caIlkLPL5YbaL/noy/988Ol/ZReXeynhqgacu9xmVlbhktVbNu5M7dklOLZvrxvGDR4/ODovvygn4zgyrqiqPN3rsH1wxaG7hdy8Zf/X3+4I9DcSYiNGDoqZMXFIdU3dwd2Hu/cIeu7+Wyg9r8STjcoRQlav2+51C6brbdB+kFIyzpnDSM8omL8sqaKyakBU75jI3nfPmdChvc/htJzKExWgG03MgdNQcUSUiDa7hhIiG9xzbhgZF9n7bADJT2iEn3lzfnGVS/X1kSARkCBQRqihckPPySmetywp71hhv8iecdGhd86a0KNLh/2pmZXF5UTjjLGWqBxpjKEIdzrKqmu+WbH1+/1H+nQP6R8VOmPi8IS40IgewUPioxHPSwD2Funft/fE0fH5hcWZR48hQFtUx64aY4ZmUb7j+0OLVm+mgIlxEUPjo26dOloI796UdLPey86Zp6OUyAbPzMsfCdsC+GLF5tyCUsJtqKuxFg4lSARmKERR9u/LWLhqCyOyf3SfQXGRt04dRQAPHMrx1DYwh05OLx9COw/FOTP0zMzCT5cmFRQUx8eGxcdGDB4QdUF5V0KIlNi1U9BtM8ZF9u585GjOyYITqHKlBWpyGirnNKpq3d+t2/Xdlr3dgtvHRYdOHJ04bmjsiZOlGUdzkBKu2fSAM0Cw6PZMu25o3GUG4xqT8subk/JnuAAQFKdR5/auXbtrRfLOkA7+CbERE66JnzRqQEFRSfrRPJR4evDVzNVBZmjA2J696YtWbZYo4yK6K4py/hJARIly6ZrNHYM7DIoLv2PGWKqQQ4dzXBXV1NDZmUhalDHmo+cXlH62dFNG9rG+Yd0G9gu7dfrYvr06H0jNKissR03lnBOElnVqiqJYta7xowdeGShi/pKknLPSUoA0mgrKfRzFJ6q+WLElLSOvX3j3mMjet0wfExXaOSPneHHeCVRUhfNWCLW9TnUfrbLKtetg+oN3TTV07fzrTIWUnLE3P17y1AvvB4cExseGjR3Wf+a1Q2pq6w4czpZeixuarYOawq4mVFxXiaYcOpg1f8VGaYn42LAB/cJunTZW4XAgNctdWYuUEs4ZJQSIFMKqqvbxNe67/YY+3TvZEP1lVUEffrn2WGEZVxVKCKOkkR6ArUELG26kmpqamjV/eZLL1RDfLzQ+Jvzu2RMMne0/lFlfUUsNldFTqFxjRzgCxG1OHpNw58xxF9Tqx16MDab1/vzVXyft2rbncN/eXWP79p5x3fBhsWE5eYXHcvKRK1zVEAVCM/UdUCIgcKfhNmVS0p7lyTvb+ToG9Y8YO3zAjAmDgWJ5eXV1VbVoMFGYwQHanMkjPnz90aEDIvFSLP8LhiJG3fTEtgPZoKqiwQ2mBQRAUYiuMkplm+CLADBGTSGgqj4sPOS5391028wJAJCZW/jqPxd9uDQZBOV+Ptii8o9zZpZV/vnpe/7wmzkXFObY0kpNz0mY/aTg3Kpp0FT2y1ljnvjt3G6dgxDlvz9b8/I/FhcWlEC7AE5IW/DDriew6l1gmtPHD37h4VviokMBoLbOlZ1bUFJR53AooT06h3QMvJLMuA++XHf8cK7D3+gf1WPkkH69e3ViFMvLa0StC1WVc9aa64FICeM+WmlF3ZJVWzfuPNSne/CAfqFTJwwbFR+VnV+Ql5lvu6rN7EG0rKd+M7t3Cx7c+W5PAB9DXfzt9pKSStXXMAndtSNt0epNnENCTMSg/hE33TCyvqEh9XCGWW8yQyONaS7SvP+ERKZqTDOOHMn7dEVyaVllz84dunQKCgkO7NOzU/cuwT5OR3VN7Zvvf1Vb1xDWq6uQ8seroPPdARKRANx435969eh879zJYT2CCeMAYAnr4JHc9xet/XRZkrvey/x9CZ4hBKaUEEKt2nrO2S9nj/nDb+d07xICiB8t+vblf32Rm3eS+PsrjHi9Zgcf4+i37wa2879Q1o2Nyt31xBufLt6oBPgKIRmnpkdCbXVifPhzD9x2w7hBALD7wNHn31ywJnkfOBzcoUrrjGUdNiWi3hFgjB8SPaR/dOcOAS6v+2D68aRtBzP3pP/j30/dd9N1lx2KkFjrcvn5OO0NISxBKGmOxfcdzvrT2/OWrdsD3OBOTZ6pLo4yioLI6qrgzgFP3DP9gbtnKgovq6j+09uf/eeLtR5TUsqvSQxP/uwvF8F5sqfj35+v/s2T7yjt21lCAAChlFJm1dWCFLdNueaFh2/t07MLAMz7ct1L/1yclVUAfn6cszPVE1BGiWkJcLnBNIFSQACQ4OdkLve//nL/vTdOvNy0FEKIpqr28rb701A7UyGllNglOPCmKWMGRvVOOZJ5Mv8kKpwrrJEqB7I5T0AAuY9R02CtXbfzu637u3RsFxfVZ9LoxIkj4k6WVx3dlTptyjXXjUq4OM6TDdF/8E0yMtbYKwIRpWCaSjX14IHMBSs2WqYnvl9YYv+I26eNUXVl34Gj7hoXMzRKWlHKUCIwgszQmVOnusIcGjMMzphV3zD9uuEDoi57Uh6aGqa0XJukCS2xu9VEhna7Y+b4Du2MfSlH68prmaExAhJJG4NJmY8zv6Bk4fKNhzPy+vftGdu3z81TRoV0CUyMDQvt2QUuiv1KCHEa+rylybX1DU2xt73LAREUh1HvlUlJO5dv3B0c6D8wJmzM0LgbxiaUV9akpmVJS3JDax2jALFLzO1KCJsOK92eOTcMvwKR8Lknxc4QCSF1TRkaHz33+mtq6ur2HcyUXlR0Fc+g0CTTFKapqYeyFyzfZJme+JjQYQn9fszsS4mGrq7auCs3u1h16qJNWQBhqDidJ05WLl6x6UBqds+uHeNjwudcP3JIbGhmTm5+9glkvC17ty0UMWPSsLgrIoDzgWVsCnF7f99pE4aOHtQ393hBbkYBcoWr3N4Lp9ergOLUXV5MTt67ZO33XYIDw3tfpAAaUTlKpCVWrt1mmpIbWiNJuFXmWVWobqSl5S5YtrGqsmpAv9C4qD53z5kY2N6ZkppVXVJB7HqeFsqzhRkD6fZMvnbIwCuigs5zJVJKbb547+6d7p4zoXNIwL5DGdUnK4mhsjaUCJvSovkbJzKLicrnTB5x0d1WKSWAOCA6dOKogXkFhVlH85AwrmktsjQETmWeNYvw7dsOfbFms8ZpYlzE0IFRN98w0mO69hzIEG5L0RVCWjOLOOPo9lw3JiExJuxnKoAWYiBCSkJIQkz4LVNGeU3PvtRMs97DDR1aw40EAMC0Hr13av/o0B8D89qKqFvnjnfMHB/dp3PKkayS/JOo6W1jFBuVU5x6RW396rU7N2zf16tbSGzf3pPHDBmZ0De/4ER2ZqEUSDXOWSP/AAi1GrxYU3fr7LExEZdGBV2OzrnNpaB7UtKf+9v8NRv3g6oqTl2c4lAjoQBuc+eXf0mIjfjxvW6llLZNqq6pf/3fi99dsKq6uoEG+BJAFIittAohlFGz1kUp3HrD8GcfvCWsZxcAWLA06e1PVuw+kgMNJhAGIIHLyD49nvjlrFumj1YVfllZET9y2L6ELYYvVm58+d0vUw/ngr+fwqnddFGY3q5B/kfW/MPXaVyqotFmwWfl5j//1vyFq7YBUbivA60ztD3ijEoEUVnbPsj3j7+a+cDd01VVkYjb9xw5cDiroKTS38eIjew+amh/H8O4lKricrYRaV6YDW7P3z74+rX3l9dU1dEAX4VRT2X19eMTV77//KVtt91S8Gs37X72rQW79maBr66omji9LMD+SsqZ5fVCdX38gPCnfnfjrOuGt73n1t2pKqeDBkSd59kGV8YGnNtVVVXlmkExsyYOqa2vO5CaISQwS946Y8yoQf3EJe213RyjSMSwXl3vmXNtx0DfvSnpNWU1YOiMnIkkSRnzcRYWlS1esW3d1l01NbVCSo/Hm19Ukrzz0F/+tfj3z/8zul/okLiIy10hc6k1krTpDhu373vy9QW7tuxd9dUbk0cn/nS9A5p7OeYXnnzx7ws/XrZJCsF9/VCcoZ6HUYIERZ0bvCboisNheExT1LuBM7C877/x2L2zLzst5SfQSIiAjFK311q0ZN11YweHBLX/qbsGNAt4x760p974ZOO2Q+BwKLoqLImnUSwlIKWM2lVTUkiglDPKOPWWVnz85qN3zhx/SQRwJftUUErsBpe6yu+aO8nmF/3UzQKa20UNGdg3eeGrH7z2YM9gP7O8WiIy3mI2kACAFFJYAhEpJRRQCCEsgQjs0inJK9+6yM6LibbUqJ/SFNmCR8RfzL1uz9K/P/fwjQbxWJU1jf7+Kat8Kh3SkltzCbvQ/Sx6R9nEqcvcKINRCkCEEIEBvi8+eueOxX+bNWmwqKsVLjfjnJKzrQYCiKbX+z8lgCsneLBBUyFkbN/eX/3zuVXvPx/ft4tVXi4soXDStvc9AWBUEUivCuDS7j8qJUopJ48dtP3rN1975t6OPrq3vBoBOWeMUUYpo5RzhoSI6hpKLpkSujAvCFs30yAX9JEf6vtqj1PL8/yLINq8xQXrM/sOQkpGGSGQX3Tylfc+X7B8a311HTAOlAEgmCY1lLumjX71D/cEtvO3v+ZH9u648qcoIYKUglBKz1yGJ6ExpXwFOlplZucvXff97kMZpZUNDp3HhnebOfmaxNhw2yzLFiGLzXG/mCzeBQnA7fbYXdElAgDqmtq2c2fL4fWalmXZ6SRCiMOhn7HdgP17SWllwYmykvIqr9fkCu/eOSi0Z2dd037wqRoa3LV1bsaJqnACxLSE06Hb/c3ONziwrPLqWq4oKiUA4DUFZdTPx3lGUMQGVJpXfWFxGeMsJKgdXNTxfed/fgBSSu75/etbdqUxh4FAzKqqvzz36zvOEo/Y//nyO5999NkaJcDXNCWVcv28l8L7dGt+SvsXS4h5X69btGrb/rScsmoXeC1ABEoUXekWEjisf8T0cYmjhw9s7+ckbd6t6bCB4jE3/xE0jVHgjLkran59x+SXfn/3eQbVUkpC6aOv/Oe7DfuMAKeQ6PWaAX6ObV+83iHAT0jRmIVFtMEfQiiipJR+uGjNynXb2/s6K+saTCmffejWQXGRF4plXdgZMkXltQUnqsDHBEqgvLra5T739aU1DYXFlWACCAGmZZpWq7X//f4jDz33r90HM4BrYKhM16jDYZOThRA5RRU5eZsWzF9z49wxX7z7TNv1RSmRiJGhPWOje6/feAB8nIAIHu+ib3c+/cCtuqbieRzigwiM0dmTR332zUawEKQEzsoK89Zv3X/L1NESm5gfpLFbu/0YD73wblpmwV/+cI+/n9PhNPanZN3xyBv/fOWBMUPjLmgfnO91zRqYaoqqclXhROVmmwYlbX1tqnFNsXst0ObO/vYjLk/aMWbuH3an5Ssd/BU/Q1VVIdCsd3mr68w6l7SEamjODu1ZgLPaZZ5j/VJCrkmMJYiapjDOuK8zK694d0q6Hcr+8KtRAgCD48J9OrSjhDCVK5wRTVu8egu0YX/aT75xx8FNO1O+++wvL7+78IU3Pr7zoVedDu3z956+/7n3XA3utu3RLpkbiogSQTa5Kz/YmFxi408TtwChsZ6CHC88cfdjb3mopvgawiSmRG9FlZ+CMZFdhw+OiuvbLdBP81bV1FdUSQSu0HPIWAjx9frtqGuWEBKRAgGvuXj1tvMHyQFg1YZddaVVVGFSohACDSNpV2pBcSmlpyGmNmz32ZKkX948lQBkHT/x6TvP3H3z5FfeWzigb6+QoIBNOw4SQs7/9JALU0GtMJBzW2A4/RAXu3UqACAgIeRP7y2uKKtXgnwtUxAA7vE8+dDse+dM7N4lhFIKUpysqN6+O+3zlclffr3B5facA+Dcui/tYGoOdTptNoOQAhzGiuRd//f7u3yd+g+ie5RQRJy/bDMolEhpKyVFYbXlNWuS995783U29bopECMAUFxeNaVzECI6HPqt9718KCf/3Rd/J4Ts1b1bUXFFI3ZxaXeALdFTfckAAEBXfsDToE1dKm2ip11RpXBeUlG1dMNe4mdIS1BGZV39/z1228uP3t2zW+fGFUdZcIf2MyYNX/zeM/P/+UzPjn5n9rURAODzZUlgnupnI0FyTTuWV7J5Z4rtgJ0bo6aUHDiSvX3/EerwaT4yAhGA8SVJ24ldrXfqCxEA/H0cOceKCSGUkOcevT2+X+iW3YcYo2VlZd26BbdBki6hCoKWjQ3P55jH09jnp/zrvKLyykrCGBIivGZwl6D7br1eyMbG643nUCEKIaXE22aM+8+ff99WAIjIGK2tc63cuA8celOlGAASQoAgfPndNkJ+aC4QAOCzFVssl5dTigiEAhBAIYlD37Q7Pa/wJG3Rb8d+hlumjX7/ixUIEOTnF9qj84zJ16RnHz+cdbywuHREYj8EpOSnMcKWZcEpLUQ8P2SEZfPhywSkRKuJgllb5yJWozcNQvo4HLqmkpa97JsQAkqJlJJzfkbPGACWrN1RmF/GdY6IjcA9ASElOo3VG/eXlFcySs9mEm3/x+31Lt3wPRi6lBIIlV4vAkEAhTNXZc3ilZuh6WgPaDzhQF4/ZvCEEfETb3vywXumMYVfO7z/6MH9Zv7qhT89fo9DV4QlyE+0A1rVALR0K8/yhqfVGjYfLKAqChIAIhCR6dqx3IKdB49SQszTjs5u9jUpnsV7QcT5KzYCoxQpWmbXDr49OvqiaQEgV5XSE2VrNu1BOKuzYJ/+t27LvuzsIm5oApEBxoR2odILQCRKUPWvv9shUVLKWj6PlPjWc7+dMn7IX//zxdzfvHD3w69t3p764WuPTRqdIAVe0FF2FyaAViEG++GN1hIIgmZ0sWfnIN1pyCZxWoTd98w/jhWVqKpCANrmBsgZA0NC0rKOb9l9hDgdSAhUN9w6ZdRtk0dCTT2jDAAJo19+u42cHSGw4aaFKzaCAEoIWiLQz/HG43drXEGbCerQ9h7JSUnLJQRaFtTbBMAH7pqx8tO/vPLkvW+++Nt57zw1IiFaSmkn0S69AOwJUU9vLWwY2g95TaSFEaaqwmy7171LcFxYD2gwOSFSSmZoh7IKht/46CdffuvxeO3cwLlTNPZ5b6uSd3qq6xsb3Wr8limjp44fApwKBCklOvQtezOKS8rpmfxCm2hcVl713feHwMcgANDgHjEw8tpr4vv2CEavhxDCGRX1DYvXbDkjECmEpISE9+7WOThQSnlxdKYfBUdfKD5mXy6F5Jw98asZ6HUDZYQQKQRz6oUVDXf//p2EGQ+//dE3FVU1jWI4i/ZglEopFq3eBoYGKGWDNzy8e7+wbv0ie3Xt1Ul63AQIV3hNWcWq5F3Nzn4r/wcAliftriwuV1QuEADkjdcNQ8QJIwaAx0splQLBcC5N2uUxTUpZKyHaOIcdE1FKL44hcWGH+JinvQaabc4pabPKZBODHRDBtgGMUSnlzInDH79vlll8khLCOJcCKFd4O7/U7OKHXvxgwJSHX3nn89KKatvotZ07Qsiu/en7D+dSQydAwO2ePWEwpdRh6GMSokiDlzJAJMCVL9ZsPSNOaZ8A++mS9aCoRBLLawZ3DZowvD8hZMaEodRQhEQEpIZ29GjhnoMZhMAZj5b+kY2D6AUtXmGJFsv+fLygU0klKWWzF0QIlVK+9tS9zz5+u6yvs2rq7XoPISTVNaW93/HSmmden5cw5cGv12yzm/u31YcLl29Gr8kpWEIyQ5k7eYT916ljEhEQJJUSiOHcti8953gRJaSlIO3yrpSjudv3HSVOBxIJroYJg2Lb+fsKKeNjwvqGdpENHkIIpYimWLZuJwDATwDdX/A5YqfJBC/iY426yw64/vTYnckLXrl2eD9ZV2fVuCgFRoiwgOpU6RBwvLxu9q9feW/BSsZosy5CRM5obZ3rm6Rd4DQQqXS5E+LCYyJ72Y7p2OH9O3Rub5kmAeQKbaisX7L2+2YUoWX6ZfGqzVaDxRmVhACBG68fAQCWJThj149KALebUoICwFCWJO3yeL0/xdnQ9IKm8DQjjGjo+nkY4VMaU+Gs1eaVUl4zJPa7+a+s+eDZSSP7iYYGs7qOUAJILa9kmkoD/B94/j/rtuxr1kX2LC9dt7Pw2Amu6oQAeM1poxPsu0nE9gF+Q2Mi0dPQuOo1/cs124Q41fsbAThjDW7vV2t3gq4honB7unUPGTU4tlmzTxg+ABQuEBElM4ysrIIN2w82J4iuxA6wz1hg5DRH/LwobNgCmWjbeqGRHnLdmEGrP31ly2evTB+fKOrc0pSEESklZYBUefKNT03TtFFGW+F+tnwT4ZwAWpZQfNQbxgyyW82bpmUJce2IGPAKm6pOHfqe1Jx9h7NIkxaSQiLA+q37MrMLmG1CXA2Thsf5ODSvadqznNAvrHPnDtLtpYQwQJDwxaotP0XS7QIDMaRNPeoBEBrqGs4NPNlmjNhk/FN+Amnlz9jejkQckRiz5P3nlv7r90EOjl5JCRWWZE7lwJG8XQcz7dPwKCXZeYVb9qaC0wEAst49blhcTN9ejFFF4ZqqcMZumjLav2M7y7QIAUaJcJkttZDd/Wfhys32kelCItfUe2++jlKqKgpnjDEa4O8zbXwCNLgJpUIiOPQN36fU1ta3LTD5kePC0FBVZacmkNLs4yfOlo+2F/uJ0ipgDAEBUVOYrqtnA6pYU45MSpw2YTjn6tRfvkwUh41WCrd5MC1reEKUEELhbNmG712V9UpgOwkIKEO7d0ratt9jCfvjjBCHofboGpRy5Bh1GBIlGHxl8r4/PXw7Y8yuqiitqF63PQWcqkQpTSskpEN5RdWa5N2WkIQCZ4wzGuTnQ7hidwrimlJYULp60+65N4xuCY5ePgHY3X46BQWAkASIlBJUZUdqxtmOW7EplZm5haAyAAmWCAkO7NihPTT19DjjkUV2Zl5IOWl0Qlho5/ScYmrYZgZLq+sBgHNuWdaCFdtAVyVKKZH4Ot9d9N27n64CYnftxkZAznAQG94BoIaemp67++DRofHRXq+lqcqK9TvKT5bxwHbClISz4oq6Sb94EQRt1Jk2mMcV6jDsOxAgQOiiNVvn3jCaXlJ6wHkLABAAYsJ6AkpCAAVSQ01Jyz5wODM+NqJVWti0hMLZrkOZaRn51KEjEOIVfft0MXTVDhcboT0h6Gn4WxM8gABAmMIAJBC0DxAxdBUAOKNbdx3en5rJnE6UCIRwRgnXiYMRkE0usl1VKhFBCCQgOeFej/X1t1uHxkfbanDB8mTgGkjZpAOR+Ps3Pha2QBKlMJGgRCEkOIyNu48UnyjrFNLhEjKIzxs1JQQAxgyJ4YZqZxYJ5ZYpn3lrPgBwxoSQlhCWEEJIhTNhep967RNLIrGn1DTHD4tr9mF27DlUUVVn114hQPNnLSFMy6KU7th3OCOrgOo6ShAgkfPo3t3sJ/ny2+3gRUq4HVyY5dXe0ipPabm7tNJ9ssJdUuE+WekprTTLqq0aFyWEIFiA4NSXJu1zNXgUzlKO5mzdm0F8DGkBULDqXWZZrdf+uH2H0gp3SYW3rMJbXo2mIIQgIFd51YnyDdv3n08q8NLvANttj4ns1T+6z95D2dxhWMJivn7fJh+4+YE/v/7UPV07BzdfnHf8xGOv/Dt55yHm6wtCSAvadQywAyV7eb2/eG3Spr0P/3ru9WMSQnt1acVd2HXw6D2PvyUkZ4QhWOjBjsEBwwf2tXHsrzfsAadDooVSBDi0R++7nVFqCUkIKJwBIVKi17RUztJzC+Yt3Ux1XaLkupadW5S8K+X6UYmLVmwy69xKB0OARFf9DRMShsVFeE2pKYxQggCWKRGRMcIYfW/BuoKScrAbaHHt8zXbbps54fzh/ktphO2SisfumXbzff9HfB1EghSC+fktWrl9/Y7DY4ZERfTo7DYx+3jRxt1plRU1zM8HLA/TdG9x6TMv/CqkY3v7tDoA6BvW66NP1z780odPvbUwNrxrTESP3l2CA9oF1NbV7UlJX75xv8djMUOXQioa95SWPfrgjQEBvgCwKnl3YV4Ra+dPANHlGjky5pnf3XS2B66qqVuyYU+Nx7JbhYCQ36zePnlkwlff7QCHjkIiQcboa4/e2Tesx9luUlhc8c6Hy7gjQJqCOI3knUey84r69Ox8qUqpLkAAjDEp5U3Xj1w2e9yixUlqcHthCSkFD3CWuawvV+wAYdlNgsBhKH4+KAXTNM/J8uuvH/rQL2baBT1CCgDo2N6fGYoS6N/g8ew8mLVzdxrIJg3OGTgNrmuIUtEUz4nyUWMGPvqLmbbxWLB0PWGMABIgIMwZE4ZZQliW4Jy1xav9fZ3XxEetWruDBfgIKUHXt+xL+2zZhszjJ6luAAGobxgY1yesd1fTEqSNe2bTiqaMG/TO/FV2QoZz1lBWuXzDjkd+MVOipMAunw045dsAfPSXh+ZOH+k9USq8JmWUAFVVogb66R3ba0HttfYBmsoR0PIKT0nF9dcN/uxvT9hnWjenBAL8nAKFRKlyRfV36h0D9I6BelB7Paid3s5PURRgRJjCc7J03Jj+X779R84ZpTTn2InkPeng4wAgliXbdwqaPCqBM2b7/q1+bDbjrIlDEIFQbrcaOV5a+Yc3PyeaTgihjKFXTBs/mDNGCHDe+g52TDA8PqpP7y7SLShjiEA0fWnybrwoFuIliANsVNPQ1EXv/nF4QvQ/F61OyywWphc4A84Aqd2wDCwLGPbu2enxX9z5m9unNILvTblJAOjUsZ2Pn1FXWQOmsBnf0LidCQgKwgSG3bsFPfLY3AfvmU0psd2qRcvWu06UkcAACwEqqyeNH9+xQ7vmyq8zBhY3jB3UIcivrKIKOANEDyGFdS6gVAAIBM1HuXHSSDvUOCPYbgnhMLSpo/u/+dYiGdgOpURGNm87uGP/kaEDouSVKtLDpn6eXo+5dU/q5t2pqZnHSitrhZAqZ/7+/r26dhwVHzl2RH9fp7PF5aeNvIKStMy8ozkFx4pKi0oqq+sapGUSQvz9fLqGBA4ZEHXdNf39fX2gqVsaAGTlHK+pcxNKvF7L9Hh79Ajp2im4MQd/9pGelV9eWW3311FVBQh4vaYN6fj7OqIiep37TQkhpRXVGZnHFM4VVaGUeNxmz27BHTtemnK2i2dHn23ptVWjF/1wdnvyHxP44AUQRK7M+FH09Ea+G6DNkLF7Qzeejwzk3JxyiU3dgE+vAzjHx6XdXqW59+T5ZULsJ2yZ1Wh5ltD56BD7SVt+nJJLRpe/8vUB/5+PqyVKVwVwVQBXx1UBXBXA1XFVAFcFcHVcFcBVAVwdVwXw/9f4f4kpuWdxw7RBAAAAAElFTkSuQmCC',
+  capone: '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',
+  schwab: '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',
+  truist: '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',
+};
+
+function institutionBadge(account, size) {
+  const s = size || 32;
+  const fontSize = Math.round(s * 0.36);
+  if (account.institutionId === 'custom' && account.institutionCustom) {
+    const name = account.institutionCustom.trim();
+    const initials = name.slice(0, 2).toUpperCase() || '?';
+    const color = hashColor(name);
+    return `<span class="inst-badge" style="width:${s}px;height:${s}px;font-size:${fontSize}px;background:${color};" title="${escapeHtml(name)}">${escapeHtml(initials)}</span>`;
+  }
+  const inst = institutionInfo(account.institutionId);
+  const logo = INSTITUTION_LOGOS[account.institutionId];
+  if (logo) {
+    return `<img class="inst-badge inst-badge-logo" src="data:image/png;base64,${logo}" style="width:${s}px;height:${s}px;" alt="${escapeHtml(inst.name)}" title="${escapeHtml(inst.name)}" />`;
+  }
+  return `<span class="inst-badge" style="width:${s}px;height:${s}px;font-size:${fontSize}px;background:${inst.color};" title="${escapeHtml(inst.name)}">${escapeHtml(inst.initials)}</span>`;
+}
+
+function institutionDisplayName(account) {
+  if (account.institutionId === 'custom') return account.institutionCustom || 'Custom institution';
+  return institutionInfo(account.institutionId).name;
+}
+
+const CATEGORY_LABELS = { asset: 'Asset', liability: 'Liability', nonAvailable: 'Non-Available' };
+function categoryLabel(cat) { return CATEGORY_LABELS[cat] || 'Asset'; }
+function categoryClass(cat) { return cat === 'liability' ? 'is-liab' : cat === 'nonAvailable' ? 'is-locked' : 'is-asset'; }
 let popoverYear = null;
 
 function updateMonthTrigger() {
@@ -2014,10 +2378,11 @@ function loadLocal() {
     const raw = localStorage.getItem(CONFIG_KEY);
     if (raw) {
       const loaded = JSON.parse(raw);
-      config = { clientId: '', theme: 'matcha', collapsedSections: {}, ...loaded };
+      config = { clientId: '', theme: 'matcha', collapsedSections: {}, accountsChartRange: 'all', ...loaded };
       if (!config.collapsedSections || typeof config.collapsedSections !== 'object') {
         config.collapsedSections = {};
       }
+      if (!CHART_RANGES.some(r => r.id === config.accountsChartRange)) config.accountsChartRange = 'all';
     }
   } catch {}
   migrateState();
@@ -2393,13 +2758,18 @@ function sortedSnapshots() {
   });
 }
 
-// Net worth math for a single snapshot.
+// Net worth math for a single snapshot. Each entry's classification comes
+// from the account it references (not the entry itself) — so re-labeling
+// an account as a liability instantly reclassifies it across every
+// snapshot's totals, past and present.
 function snapshotTotals(snap) {
   let assets = 0, nonAvailable = 0, liabilities = 0;
   (snap.entries || []).forEach(e => {
+    const acct = state.accounts.find(a => a.id === e.accountId);
+    if (!acct) return; // account was deleted — excluded from totals
     const amt = e.amount || 0;
-    if (e.type === 'liability') liabilities += amt;
-    else if (e.type === 'nonAvailable') nonAvailable += amt;
+    if (acct.category === 'liability') liabilities += amt;
+    else if (acct.category === 'nonAvailable') nonAvailable += amt;
     else assets += amt;
   });
   const net = assets + nonAvailable - liabilities;
@@ -2408,24 +2778,44 @@ function snapshotTotals(snap) {
   return { assets, nonAvailable, liabilities, net, liquid };
 }
 
+function snapshotDateExists(dateStr, excludeId) {
+  return state.assets.some(s => s.date === dateStr && s.id !== excludeId);
+}
+
 function addSnapshot() {
-  // Pre-fill line items from the most recent snapshot so updating balances
-  // on a new day is just editing numbers, not retyping every account.
+  if (state.accounts.length === 0) {
+    toast('Add an account first, then take a snapshot', 'error');
+    activeTab = 'accounts';
+    render();
+    return;
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  const existing = state.assets.find(s => s.date === today);
+  if (existing) {
+    toast("You already have a snapshot for today — opening it", 'error');
+    config.collapsedSections['snap-' + existing.id] = false;
+    saveConfig();
+    render();
+    setTimeout(() => {
+      const card = document.querySelector(`.snap-card[data-snap-id="${existing.id}"]`);
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 0);
+    return;
+  }
+  // One row per account that already existed by today — never one you add
+  // later — carrying forward each account's balance from the most recent
+  // snapshot it appeared in (0 if it's brand new), so taking a new
+  // snapshot is just editing numbers, never retyping every account.
   const sorted = sortedSnapshots();
   const prior = sorted[sorted.length - 1];
-  const today = new Date().toISOString().slice(0, 10);
-  const entries = prior
-    ? prior.entries.map(e => ({
-        id: 'ent-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-        name: e.name,
-        type: e.type,
-        amount: e.amount,
-      }))
-    : [
-        { id: 'ent-' + Date.now() + '-a', name: 'Checking', type: 'asset', amount: 0 },
-        { id: 'ent-' + Date.now() + '-b', name: 'Savings', type: 'asset', amount: 0 },
-        { id: 'ent-' + Date.now() + '-c', name: 'Credit card', type: 'liability', amount: 0 },
-      ];
+  const entries = accountsAsOf(today).map(acct => {
+    const priorEntry = prior ? prior.entries.find(e => e.accountId === acct.id) : null;
+    return {
+      id: 'ent-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+      accountId: acct.id,
+      amount: priorEntry ? priorEntry.amount : 0,
+    };
+  });
   // Capture current fund balance at snapshot time.
   const fundBalance = state.autoFunds.reduce((a, f) => a + computeFund(f).balance, 0);
   const snap = {
@@ -2462,52 +2852,156 @@ function removeSnapshot(id) {
 function updateSnapshotField(id, field, value) {
   const snap = state.assets.find(s => s.id === id);
   if (!snap) return;
-  if (field === 'date') snap.date = value;
+  if (field === 'date') {
+    if (snapshotDateExists(value, id)) {
+      toast('Another snapshot already exists for that date', 'error');
+      render(); // reset the input back to the unchanged stored date
+      return;
+    }
+    snap.date = value;
+  }
   else if (field === 'label') snap.label = value;
   saveLocal();
   render();
   debouncedSync();
 }
 
-function addEntry(snapId, type) {
+// Sets (creating if needed) the balance a snapshot records for one account.
+// Snapshot rows are always driven by the current Accounts list, so an
+// account added after a snapshot was taken simply starts at $0 in it until
+// edited here.
+function updateEntryAmount(snapId, accountId, value) {
   const snap = state.assets.find(s => s.id === snapId);
   if (!snap) return;
-  const ent = {
-    id: 'ent-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-    name: type === 'liability' ? 'New liability' : 'New asset',
-    type,
-    amount: 0,
+  let ent = snap.entries.find(e => e.accountId === accountId);
+  if (!ent) {
+    ent = { id: 'ent-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6), accountId, amount: 0 };
+    snap.entries.push(ent);
+  }
+  ent.amount = parseFloat(value) || 0;
+  saveLocal();
+  render();
+  debouncedSync();
+}
+
+// ============================================================
+//  ACCOUNTS — CRUD
+// ============================================================
+function findAccount(id) {
+  return state.accounts.find(a => a.id === id);
+}
+
+function addAccount(data) {
+  const acct = {
+    id: 'acct-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    name: (data.name || '').trim() || accountTypeInfo(data.type).label,
+    type: data.type || 'other',
+    institutionId: data.institutionId || 'custom',
+    institutionCustom: (data.institutionCustom || '').trim(),
+    last4: (data.last4 || '').replace(/\D/g, '').slice(0, 4),
+    category: data.category || accountTypeInfo(data.type).defaultCategory,
+    dateAdded: data.dateAdded || new Date().toISOString().slice(0, 10),
   };
-  snap.entries.push(ent);
+  ensureAccountShape(acct);
+  state.accounts.push(acct);
   saveLocal();
   render();
   debouncedSync();
-  setTimeout(() => {
-    const el = document.querySelector(`.entry-name[data-entry-id="${ent.id}"]`);
-    if (el) { el.focus(); el.select(); }
-  }, 0);
+  toast(`Added ${acct.name}`, 'success');
 }
 
-function removeEntry(snapId, entryId) {
-  const snap = state.assets.find(s => s.id === snapId);
-  if (!snap) return;
-  snap.entries = snap.entries.filter(e => e.id !== entryId);
+function updateAccount(id, data) {
+  const acct = findAccount(id);
+  if (!acct) return;
+  if (data.name !== undefined) acct.name = data.name.trim();
+  if (data.type !== undefined) acct.type = data.type;
+  if (data.institutionId !== undefined) acct.institutionId = data.institutionId;
+  if (data.institutionCustom !== undefined) acct.institutionCustom = data.institutionCustom.trim();
+  if (data.last4 !== undefined) acct.last4 = data.last4.replace(/\D/g, '').slice(0, 4);
+  if (data.category !== undefined) acct.category = data.category;
+  if (data.dateAdded !== undefined && data.dateAdded) acct.dateAdded = data.dateAdded;
+  ensureAccountShape(acct);
   saveLocal();
   render();
   debouncedSync();
 }
 
-function updateEntry(snapId, entryId, field, value) {
-  const snap = state.assets.find(s => s.id === snapId);
-  if (!snap) return;
-  const ent = snap.entries.find(e => e.id === entryId);
-  if (!ent) return;
-  if (field === 'amount') ent.amount = parseFloat(value) || 0;
-  else if (field === 'type') ent.type = ['asset', 'liability', 'nonAvailable'].includes(value) ? value : 'asset';
-  else ent[field] = value;
+function removeAccount(id) {
+  const acct = findAccount(id);
+  if (!acct) return;
+  const hasHistory = state.assets.some(snap => snap.entries.some(e => e.accountId === id));
+
+  if (!hasHistory) {
+    // Never appeared in a snapshot — nothing to preserve, so a plain
+    // delete is safe and unambiguous.
+    if (!confirm(`Delete "${acct.name}"? This can't be undone.`)) return;
+    state.accounts = state.accounts.filter(a => a.id !== id);
+    saveLocal();
+    render();
+    debouncedSync();
+    toast(`Deleted ${acct.name}`, 'success');
+    return;
+  }
+
+  // Has snapshot history — archive rather than delete, so its label and
+  // recorded amounts stay exactly as they were in every snapshot it was
+  // already part of. It just stops appearing in the active account list
+  // and in any snapshot taken from here on.
+  const today = new Date().toISOString().slice(0, 10);
+  if (!confirm(`Remove "${acct.name}"? It'll disappear from new snapshots going forward, but keeps its label and amounts in every snapshot up through today. You can restore it later from Removed Accounts.`)) return;
+  acct.deletedDate = today;
   saveLocal();
   render();
   debouncedSync();
+  toast(`Removed ${acct.name}`, 'success');
+}
+
+// Un-archives a removed account — clears its removal date so it becomes
+// active again and shows up in new snapshots going forward. Its past
+// snapshot entries were never touched, so history is unaffected either way.
+function restoreAccount(id) {
+  const acct = findAccount(id);
+  if (!acct) return;
+  acct.deletedDate = null;
+  saveLocal();
+  render();
+  debouncedSync();
+  toast(`Restored ${acct.name}`, 'success');
+}
+
+// Permanently erases an archived account and strips it out of every
+// snapshot's history — unlike removeAccount, this cannot be undone.
+function hardDeleteAccount(id) {
+  const acct = findAccount(id);
+  if (!acct) return;
+  if (!confirm(`Permanently delete "${acct.name}"? This erases it from every snapshot's history too, and can't be undone.`)) return;
+  state.accounts = state.accounts.filter(a => a.id !== id);
+  state.assets.forEach(snap => {
+    snap.entries = snap.entries.filter(e => e.accountId !== id);
+  });
+  saveLocal();
+  render();
+  debouncedSync();
+  toast(`Permanently deleted ${acct.name}`, 'success');
+}
+
+// Latest recorded balance for an account, or null if it's never appeared
+// in a snapshot yet.
+function latestBalanceForAccount(accountId) {
+  const snaps = sortedSnapshots();
+  for (let i = snaps.length - 1; i >= 0; i--) {
+    const ent = snaps[i].entries.find(e => e.accountId === accountId);
+    if (ent) return ent.amount;
+  }
+  return null;
+}
+
+// Accounts that existed on or before a given date — used so a snapshot
+// only ever shows accounts that were actually open at that point in time.
+// A brand-new account never retroactively appears in (or zeroes out) your
+// older history.
+function accountsAsOf(dateStr) {
+  return state.accounts.filter(a => a.dateAdded <= dateStr && (!a.deletedDate || dateStr <= a.deletedDate));
 }
 
 // Collapse/expand a single snapshot. Reuses config.collapsedSections so the
@@ -2519,15 +3013,18 @@ function toggleSnapshot(snapId) {
   render();
 }
 
-// Collapse or expand every snapshot at once.
+// Collapse or expand every snapshot at once — drives the "Expand all" /
+// "Collapse all" button above the snapshot list.
 function toggleAllSnapshots(collapse) {
-  state.assets.forEach(s => {
-    config.collapsedSections['snap-' + s.id] = collapse;
+  state.assets.forEach(snap => {
+    config.collapsedSections['snap-' + snap.id] = collapse;
   });
   saveConfig();
   render();
 }
 
+// Collapse or expand a generic named section (Plan sections, the Accounts
+// section, the whole Snapshots section, etc).
 function toggleSection(key) {
   config.collapsedSections[key] = !config.collapsedSections[key];
   saveConfig();
@@ -3157,14 +3654,14 @@ function render() {
   if (fab) {
     const fabHidden = activeTab === 'plan' || activeTab === 'settings';
     fab.style.display = fabHidden ? 'none' : 'flex';
-    fab.setAttribute('aria-label', activeTab === 'assets' ? 'Add asset snapshot' : activeTab === 'funds' ? 'Add fund' : 'Add transaction');
-    fab.title = activeTab === 'assets' ? 'New snapshot' : activeTab === 'funds' ? 'New fund' : 'New transaction';
+    fab.setAttribute('aria-label', activeTab === 'accounts' ? 'Add account snapshot' : activeTab === 'funds' ? 'Add fund' : 'Add transaction');
+    fab.title = activeTab === 'accounts' ? 'New snapshot' : activeTab === 'funds' ? 'New fund' : 'New transaction';
   }
   const view = document.getElementById('view');
   if (activeTab === 'dashboard') view.innerHTML = renderDashboard();
   else if (activeTab === 'transactions') view.innerHTML = renderTransactions();
   else if (activeTab === 'plan') view.innerHTML = renderPlan();
-  else if (activeTab === 'assets') view.innerHTML = renderAssets();
+  else if (activeTab === 'accounts') view.innerHTML = renderAccounts();
   else if (activeTab === 'funds') view.innerHTML = renderFunds();
   else if (activeTab === 'settings') view.innerHTML = renderSettings();
   attachViewHandlers();
@@ -3239,7 +3736,16 @@ function renderDashboard() {
   const unallocatedPct = takeHome > 0 ? (unallocated / takeHome) * 100 : 0;
   const isOverAllocated = unallocated < -0.005;
 
+  const remainingStickyBar = `
+    <div class="net-worth-sticky" id="remaining-sticky">
+      <span class="net-worth-sticky-label">Remaining this month</span>
+      <span class="net-worth-sticky-value ${remainingState === 'negative' ? 'negative' : ''}">$${fmt(remaining)}</span>
+      ${takeHome > 0 ? `<span class="net-worth-sticky-delta">${remainingPct.toFixed(0)}% unspent</span>` : ''}
+    </div>
+  `;
+
   return `
+    ${remainingStickyBar}
     <div class="dashboard-top">
       <div class="hero-card">
         <div class="hero-label">Remaining this month</div>
@@ -3579,65 +4085,63 @@ function renderPlan() {
 //  ASSETS
 // ============================================================
 
-// Build an SVG trend chart of net worth (plus assets/liabilities) over time.
-// Pure SVG so it themes via CSS vars and needs no external library.
-function buildAssetsChart(snaps) {
+// Build a clean single-line SVG area chart of net worth over time — no
+// overlaid assets/liabilities/available series, just the one trend line,
+// closer to how most net-worth trackers present it. Pure SVG so it themes
+// via CSS vars and needs no external library.
+function buildNetWorthChart(snaps) {
   if (snaps.length === 0) return '';
 
-  const W = 720, H = 280;
-  const padL = 56, padR = 18, padT = 18, padB = 34;
+  const W = 720, H = 220;
+  const padL = 50, padR = 12, padT = 14, padB = 30;
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
 
-  // Compute fund balance at a given date string (YYYY-MM-DD).
-  function totalFundBalanceAt(dateStr) {
-    const asOfMonth = dateStr.slice(0, 7); // YYYY-MM
-    return state.autoFunds.reduce((sum, fund) => {
-      const contributed = fundContributedThrough(fund, asOfMonth);
-      const withdrawn = fund.withdrawals
-        .filter(w => w.date.slice(0, 10) <= dateStr)
-        .reduce((a, w) => a + w.amount, 0);
-      return sum + Math.max(0, contributed - withdrawn);
-    }, 0);
-  }
+  const points = snaps.map(s => ({ date: s.date, net: snapshotTotals(s).net }));
 
-  const hasFunds = state.autoFunds.length > 0;
-
-  // Series: net worth, total assets, total liabilities, available.
-  const points = snaps.map(s => {
-    const t = snapshotTotals(s);
-    // Use stored fundBalance if available, otherwise estimate retroactively.
-    const fundBal = s.fundBalance !== null && s.fundBalance !== undefined
-      ? s.fundBalance
-      : (hasFunds ? totalFundBalanceAt(s.date) : 0);
-    // Available = liquid assets (assets − liabilities) minus fund commitments.
-    return { date: s.date, net: t.net, assets: t.assets + t.nonAvailable, liabilities: t.liabilities, available: t.liquid - fundBal };
-  });
-
-  const allVals = points.flatMap(p => hasFunds
-    ? [p.net, p.assets, p.liabilities, p.available]
-    : [p.net, p.assets, p.liabilities]);
-  let minV = Math.min(0, ...allVals);
-  let maxV = Math.max(0, ...allVals);
+  let minV = Math.min(0, ...points.map(p => p.net));
+  let maxV = Math.max(0, ...points.map(p => p.net));
   if (minV === maxV) { maxV = minV + 1; } // avoid divide by zero
-  // Add a little headroom.
   const range = maxV - minV;
-  maxV += range * 0.08;
-  minV -= range * 0.08;
+  maxV += range * 0.1;
+  minV -= range * 0.1;
 
   const n = points.length;
-  const xFor = (i) => n === 1 ? padL + plotW / 2 : padL + (i / (n - 1)) * plotW;
+  // Position points proportionally to elapsed time, not just index — a
+  // 6-month gap reads visibly wider than a 2-week gap.
+  const times = points.map(p => new Date(p.date + 'T00:00:00').getTime());
+  const minT = times[0];
+  const maxT = times[n - 1];
+  const timeRange = maxT - minT;
+  const xFor = (i) => (n === 1 || timeRange === 0)
+    ? padL + plotW / 2
+    : padL + ((times[i] - minT) / timeRange) * plotW;
   const yFor = (v) => padT + (1 - (v - minV) / (maxV - minV)) * plotH;
 
-  // Gridlines / y-axis labels (4 ticks).
-  const ticks = 4;
-  let gridSvg = '';
-  for (let i = 0; i <= ticks; i++) {
-    const v = minV + (i / ticks) * (maxV - minV);
-    const y = yFor(v);
-    gridSvg += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" class="chart-grid" />`;
-    gridSvg += `<text x="${padL - 8}" y="${(y + 3.5).toFixed(1)}" class="chart-axis-label" text-anchor="end">${fmtCompact(v)}</text>`;
+  // X-axis date labels: keep first & last, greedily fill in between as
+  // space allows so labels never overlap regardless of spacing.
+  const minGap = 60;
+  const labelIndices = [0];
+  for (let i = 1; i < n; i++) {
+    const isLast = i === n - 1;
+    if (isLast || xFor(i) - xFor(labelIndices[labelIndices.length - 1]) >= minGap) {
+      labelIndices.push(i);
+    }
   }
+  if (labelIndices.length > 2) {
+    const lastTwo = labelIndices.slice(-2);
+    if (xFor(lastTwo[1]) - xFor(lastTwo[0]) < minGap) {
+      labelIndices.splice(labelIndices.length - 2, 1);
+    }
+  }
+  const labelIdx = new Set(labelIndices);
+
+  let xLabels = '';
+  points.forEach((p, i) => {
+    if (!labelIdx.has(i)) return;
+    const anchor = i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle';
+    xLabels += `<text x="${xFor(i).toFixed(1)}" y="${H - 8}" class="chart-axis-label" text-anchor="${anchor}">${escapeHtml(formatDateShort(p.date))}</text>`;
+  });
 
   // Zero baseline emphasized if within range.
   let zeroSvg = '';
@@ -3646,50 +4150,155 @@ function buildAssetsChart(snaps) {
     zeroSvg = `<line x1="${padL}" y1="${yz.toFixed(1)}" x2="${W - padR}" y2="${yz.toFixed(1)}" class="chart-zero" />`;
   }
 
-  const linePath = (key) => points.map((p, i) => `${i === 0 ? 'M' : 'L'}${xFor(i).toFixed(1)},${yFor(p[key]).toFixed(1)}`).join(' ');
-
-  // Area under the net-worth line, down to the baseline (zero or bottom).
+  const netLine = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${xFor(i).toFixed(1)},${yFor(p.net).toFixed(1)}`).join(' ');
   const baseY = (minV < 0 && maxV > 0) ? yFor(0) : (padT + plotH);
-  const netLine = linePath('net');
   const areaPath = `${netLine} L${xFor(n - 1).toFixed(1)},${baseY.toFixed(1)} L${xFor(0).toFixed(1)},${baseY.toFixed(1)} Z`;
 
-  // Dots + interactive titles for net worth.
-  const dots = points.map((p, i) => {
-    const cx = xFor(i).toFixed(1), cy = yFor(p.net).toFixed(1);
-    const avail = hasFunds ? ` · $${fmt(p.available)} available` : '';
-    return `<circle cx="${cx}" cy="${cy}" r="3.5" class="chart-dot"><title>${escapeHtml(formatDateShort(p.date))}: $${fmt(p.net)} net${avail}</title></circle>`;
-  }).join('');
+  const endDot = `<circle cx="${xFor(n - 1).toFixed(1)}" cy="${yFor(points[n - 1].net).toFixed(1)}" r="4" class="chart-dot" />`;
 
-  // X-axis date labels — show first, last, and a couple in between to avoid crowding.
-  const labelIdx = new Set([0, n - 1]);
-  if (n > 2) labelIdx.add(Math.floor((n - 1) / 2));
-  if (n > 4) { labelIdx.add(Math.floor((n - 1) / 4)); labelIdx.add(Math.floor(3 * (n - 1) / 4)); }
-  let xLabels = '';
-  points.forEach((p, i) => {
-    if (!labelIdx.has(i)) return;
-    const anchor = i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle';
-    xLabels += `<text x="${xFor(i).toFixed(1)}" y="${H - 10}" class="chart-axis-label" text-anchor="${anchor}">${escapeHtml(formatDateShort(p.date))}</text>`;
-  });
+  // Stash everything the hover-tooltip handler needs. Read fresh on every
+  // pointermove rather than baked into the SVG, since points/xFor close
+  // over this render's scale — a later render replaces this object wholesale.
+  chartHoverState = { points, xPix: points.map((_, i) => xFor(i)), yFor, padT, plotH };
 
   return `
-    <svg class="assets-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Net worth trend chart">
-      ${gridSvg}
-      ${zeroSvg}
-      <path d="${areaPath}" class="chart-area" />
-      <path d="${linePath('assets')}" class="chart-line chart-line-assets" />
-      <path d="${linePath('liabilities')}" class="chart-line chart-line-liab" />
-      ${hasFunds ? `<path d="${linePath('available')}" class="chart-line chart-line-avail" />` : ''}
-      <path d="${netLine}" class="chart-line chart-line-net" />
-      ${dots}
-      ${xLabels}
-    </svg>
-    <div class="chart-legend">
-      <span class="chart-legend-item"><span class="chart-legend-swatch sw-net"></span>Net worth</span>
-      ${hasFunds ? '<span class="chart-legend-item"><span class="chart-legend-swatch sw-avail"></span>Available</span>' : ''}
-      <span class="chart-legend-item"><span class="chart-legend-swatch sw-assets"></span>Total assets</span>
-      <span class="chart-legend-item"><span class="chart-legend-swatch sw-liab"></span>Total liabilities</span>
+    <div class="chart-wrap">
+      <svg class="assets-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Net worth trend chart">
+        ${zeroSvg}
+        <path d="${areaPath}" class="chart-area" />
+        <path d="${netLine}" class="chart-line chart-line-net" />
+        ${endDot}
+        ${xLabels}
+        <line id="chart-hover-line" class="chart-hoverline" x1="0" y1="0" x2="0" y2="0" style="opacity:0" />
+        <circle id="chart-hover-dot-net" class="chart-hoverdot dot-net" r="4.5" style="opacity:0" />
+      </svg>
+      <div class="chart-tooltip" id="chart-tooltip" style="opacity:0"></div>
     </div>
   `;
+}
+
+// Wires up the crosshair + tooltip for the net worth trend chart. Called
+// after every render(); no-ops harmlessly if the chart isn't on screen.
+function setupNetWorthChartHover() {
+  const data = chartHoverState;
+  const svg = document.querySelector('.assets-chart');
+  const wrap = document.querySelector('.chart-wrap');
+  const tooltip = document.getElementById('chart-tooltip');
+  const hoverLine = document.getElementById('chart-hover-line');
+  if (!data || !svg || !wrap || !tooltip || !hoverLine) return;
+
+  const dotNet = document.getElementById('chart-hover-dot-net');
+
+  function nearestIndex(svgX) {
+    let best = 0, bestDist = Infinity;
+    data.xPix.forEach((x, i) => {
+      const d = Math.abs(x - svgX);
+      if (d < bestDist) { bestDist = d; best = i; }
+    });
+    return best;
+  }
+
+  // Converts a point's SVG-space coordinates to screen pixels, so the
+  // tooltip can be anchored to where the line actually is on screen —
+  // not to wherever a finger happens to be touching.
+  function pointScreenPos(x, y) {
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return null;
+    const pt = svg.createSVGPoint();
+    pt.x = x; pt.y = y;
+    return pt.matrixTransform(ctm);
+  }
+
+  function showAt(i) {
+    const p = data.points[i];
+    const x = data.xPix[i];
+    const y = data.yFor(p.net);
+    hoverLine.setAttribute('x1', x); hoverLine.setAttribute('x2', x);
+    hoverLine.setAttribute('y1', data.padT); hoverLine.setAttribute('y2', data.padT + data.plotH);
+    hoverLine.style.opacity = 1;
+
+    dotNet.setAttribute('cx', x); dotNet.setAttribute('cy', y); dotNet.style.opacity = 1;
+
+    tooltip.innerHTML = `<div class="chart-tooltip-date">${escapeHtml(formatDateShort(p.date))}</div>
+      <div class="chart-tooltip-row">Net worth <strong>$${fmt(p.net)}</strong></div>`;
+    tooltip.style.opacity = 1;
+
+    const wrapRect = wrap.getBoundingClientRect();
+    const screenPos = pointScreenPos(x, y);
+    if (!screenPos) return;
+    const pointX = screenPos.x - wrapRect.left;
+    const pointY = screenPos.y - wrapRect.top;
+    const tw = tooltip.offsetWidth, th = tooltip.offsetHeight;
+    const gap = 12; // clearance between the tooltip and the plotted line
+
+    // Always place the tooltip above the line at this point — never below
+    // it, where a thumb would be covering the chart on a touch device.
+    let left = pointX - tw / 2;
+    let top = pointY - th - gap;
+    if (left < 4) left = 4;
+    if (left + tw > wrapRect.width - 4) left = wrapRect.width - tw - 4;
+    if (top < 4) top = 4; // pinned near the top if the line itself is close to it
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
+  }
+
+  function hide() {
+    hoverLine.style.opacity = 0;
+    dotNet.style.opacity = 0;
+    tooltip.style.opacity = 0;
+  }
+
+  function handleMove(e) {
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return;
+    const loc = pt.matrixTransform(ctm.inverse());
+    showAt(nearestIndex(loc.x));
+  }
+
+  svg.addEventListener('pointermove', handleMove);
+  svg.addEventListener('pointerdown', handleMove);
+  svg.addEventListener('pointerleave', hide);
+}
+
+// Keeps a reference to the current observer so we can disconnect it before
+// each re-render sets up a fresh one — each tab replaces the DOM wholesale
+// on every state change, so a stale observer would otherwise keep watching
+// a detached element.
+let stickyBarObserver = null;
+
+// Shows a condensed summary bar pinned to the top of the screen once
+// you've scrolled past that tab's main hero card — so the headline number
+// stays visible while you're down browsing categories or snapshots.
+// Checks every known hero/bar pair; only one tab is ever on screen at a
+// time, so at most one pair will actually be found in the DOM.
+function setupStickyBar() {
+  if (stickyBarObserver) {
+    stickyBarObserver.disconnect();
+    stickyBarObserver = null;
+  }
+  if (typeof IntersectionObserver === 'undefined') return;
+
+  const pairs = [
+    { hero: '.assets-hero', bar: 'net-worth-sticky' },
+    { hero: '.hero-card', bar: 'remaining-sticky' },
+  ];
+  for (const { hero, bar } of pairs) {
+    const heroEl = document.querySelector(hero);
+    const barEl = document.getElementById(bar);
+    if (!heroEl || !barEl) continue;
+    stickyBarObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        // Only show once the hero has scrolled up and out of view — not
+        // before it's been scrolled to in the first place.
+        const scrolledPast = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+        barEl.classList.toggle('visible', scrolledPast);
+      });
+    }, { threshold: 0 });
+    stickyBarObserver.observe(heroEl);
+    break;
+  }
 }
 
 // Compact currency for axis labels: $1.2k, $45k, $1.3M, etc.
@@ -3713,115 +4322,260 @@ function formatDateShort(iso) {
   return `${MONTH_NAMES[dt.getMonth()]} ${dt.getDate()} '${String(y).slice(2)}`;
 }
 
-function renderAssets() {
+// Cards for the standalone "Your Accounts" management section — one card
+// per persistent account, showing its institution badge, type, last 4
+// digits, category, and latest recorded balance.
+// Renders account groups (Cash, Investments, Real Estate, etc.) as cards,
+// each with a group total + delta over the selected chart range, and every
+// account within it listed by latest balance and last-updated date.
+// `baselineSnap` is the snapshot at the start of the selected range —
+// used to compute each group's delta consistently with the hero above it.
+function renderAccountGroups(baselineSnap, latestSnap) {
+  const activeAccounts = state.accounts.filter(a => !a.deletedDate);
+  const removedAccounts = state.accounts.filter(a => a.deletedDate);
+
+  if (activeAccounts.length === 0 && removedAccounts.length === 0) {
+    return `
+      <div class="empty acct-empty">
+        <div class="empty-big">No accounts yet</div>
+        <div>Add every account you want to track — checking, savings, credit cards, retirement, brokerage, loans, anything. Label each one so your net worth always adds up correctly.</div>
+        <button class="btn-primary assets-empty-btn" data-action="add-account">Add your first account</button>
+      </div>
+    `;
+  }
+
+  function balanceInSnap(snap, acctId) {
+    if (!snap) return null;
+    const ent = snap.entries.find(e => e.accountId === acctId);
+    return ent ? ent.amount : null;
+  }
+
+  const groups = ACCOUNT_GROUP_ORDER
+    .map(name => ({ name, accounts: activeAccounts.filter(a => accountGroupName(a) === name) }))
+    .filter(g => g.accounts.length > 0);
+
+  const groupCards = groups.map(g => {
+    const latestTotal = g.accounts.reduce((sum, a) => sum + (balanceInSnap(latestSnap, a.id) ?? 0), 0);
+    const baseTotal = baselineSnap
+      ? g.accounts.reduce((sum, a) => sum + (balanceInSnap(baselineSnap, a.id) ?? 0), 0)
+      : null;
+    const groupDelta = baseTotal !== null ? latestTotal - baseTotal : null;
+    const groupPct = (baseTotal && baseTotal !== 0) ? (groupDelta / Math.abs(baseTotal)) * 100 : null;
+    const isLiabGroup = g.name === 'Liabilities';
+
+    const rows = g.accounts.map(acct => {
+      const bal = latestBalanceForAccount(acct.id);
+      const balClass = bal === null ? '' : isLiabGroup ? 'neg' : bal < 0 ? 'neg' : 'pos';
+      const lastDate = (() => {
+        const snaps = sortedSnapshots();
+        for (let i = snaps.length - 1; i >= 0; i--) {
+          if (snaps[i].entries.some(e => e.accountId === acct.id)) return snaps[i].date;
+        }
+        return null;
+      })();
+      return `
+        <div class="acct-row" data-action="edit-account" data-acct-id="${acct.id}">
+          ${institutionBadge(acct, 36)}
+          <div class="acct-row-info">
+            <div class="acct-row-name">${escapeHtml(acct.name)}</div>
+            <div class="acct-row-meta">${escapeHtml(accountTypeInfo(acct.type).label)}${acct.last4 ? ` · •••• ${escapeHtml(acct.last4)}` : ''}</div>
+          </div>
+          <div class="acct-row-side">
+            <span class="acct-row-balance ${balClass}">${bal === null ? '—' : `$${fmt(bal)}`}</span>
+            <span class="acct-row-updated">${lastDate ? relativeDateLabel(lastDate) : 'no data yet'}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="acct-group-card">
+        <div class="acct-group-head">
+          <div>
+            <div class="acct-group-name">${escapeHtml(g.name)}</div>
+            ${groupDelta !== null ? `
+              <div class="acct-group-delta ${groupDelta >= 0 ? 'pos' : 'neg'}">
+                ${groupDelta >= 0 ? '↑' : '↓'} $${fmt(Math.abs(groupDelta))}${groupPct !== null ? ` (${Math.abs(groupPct).toFixed(1)}%)` : ''}
+              </div>` : ''}
+          </div>
+          <span class="acct-group-total ${isLiabGroup ? 'neg' : 'pos'}">$${fmt(latestTotal)}</span>
+        </div>
+        <div class="acct-group-rows">${rows}</div>
+      </div>
+    `;
+  }).join('');
+
+  const activeEmptyHint = activeAccounts.length === 0 ? `
+    <div class="empty acct-empty">
+      <div class="empty-big">No active accounts</div>
+      <div>All your accounts are currently removed. Add a new one, or restore one below.</div>
+      <button class="btn-primary assets-empty-btn" data-action="add-account">Add an account</button>
+    </div>
+  ` : '';
+
+  // Removed accounts stay out of the active groups and out of new
+  // snapshots, but their label and every past recorded amount are
+  // untouched — this list is just for restoring them or, if you're sure,
+  // erasing them for good.
+  const removedCollapsed = !!config.collapsedSections['removed-accounts'];
+  const removedSection = removedAccounts.length > 0 ? `
+    <div class="acct-removed-section">
+      <button class="acct-removed-toggle ${removedCollapsed ? 'collapsed' : ''}" data-action="toggle-section" data-section-key="removed-accounts" aria-expanded="${!removedCollapsed}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+        Removed accounts (${removedAccounts.length})
+      </button>
+      <div class="section-body ${removedCollapsed ? 'collapsed' : ''}">
+        <div class="acct-group-card">
+          <div class="acct-group-rows">
+            ${removedAccounts.map(acct => `
+              <div class="acct-row acct-row-removed">
+                ${institutionBadge(acct, 36)}
+                <div class="acct-row-info">
+                  <div class="acct-row-name">${escapeHtml(acct.name)}</div>
+                  <div class="acct-row-meta">Removed ${escapeHtml(formatDateShort(acct.deletedDate))}</div>
+                </div>
+                <div class="acct-row-removed-actions">
+                  <button class="btn-secondary btn-sm" data-action="restore-account" data-acct-id="${acct.id}">Restore</button>
+                  <button class="icon-btn" data-action="hard-delete-account" data-acct-id="${acct.id}" aria-label="Permanently delete ${escapeHtml(acct.name)}" title="Delete permanently">🗑</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  ` : '';
+
+  return `<div class="acct-group-list">${groupCards}${activeEmptyHint}${removedSection}</div>`;
+}
+
+function renderAccounts() {
   const snaps = sortedSnapshots();
+  chartHoverState = null; // reset; buildNetWorthChart() repopulates it if called below
+
+  const acctSectionCollapsed = !!config.collapsedSections['accounts-section'];
+  const buildHeaderRow = (baselineSnap, latestSnap) => `
+    <div class="group-header assets-list-header">
+      <div class="plan-section-head-left">
+        <button class="section-toggle ${acctSectionCollapsed ? 'collapsed' : ''}" data-action="toggle-section" data-section-key="accounts-section" aria-label="Toggle accounts section" aria-expanded="${!acctSectionCollapsed}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+        <h2 class="group-title">Accounts</h2>
+      </div>
+      <div class="assets-list-actions">
+        <button class="btn-secondary" data-action="add-account">+ Add account</button>
+      </div>
+    </div>
+    <div class="section-body ${acctSectionCollapsed ? 'collapsed' : ''}">
+      ${renderAccountGroups(baselineSnap, latestSnap)}
+    </div>
+  `;
 
   if (snaps.length === 0) {
     return `
+      ${buildHeaderRow(null, null)}
       <div class="assets-intro">
         <div class="empty">
           <div class="empty-big">No snapshots yet</div>
-          <div>Take a snapshot of your accounts on any day — checking, savings, credit cards, loans, investments, anything. Add a few over time and you'll see your net worth trend here.</div>
-          <button class="btn-primary assets-empty-btn" data-action="add-snapshot">Take your first snapshot</button>
+          <div>${state.accounts.length === 0
+            ? 'Add your accounts above, then take a snapshot to start tracking your net worth over time.'
+            : "Take a snapshot of your accounts' balances on any day. Add a few over time and you'll see your net worth trend here."}</div>
+          ${state.accounts.length > 0 ? `<button class="btn-primary assets-empty-btn" data-action="add-snapshot">Take your first snapshot</button>` : ''}
         </div>
       </div>
     `;
   }
 
-  // Latest snapshot summary + delta vs previous.
   const latest = snaps[snaps.length - 1];
   const latestTotals = snapshotTotals(latest);
+
+  // Change since your immediately previous snapshot — independent of
+  // whatever chart range is selected below.
   const prev = snaps.length > 1 ? snaps[snaps.length - 2] : null;
   const prevNet = prev ? snapshotTotals(prev).net : null;
-  const delta = prevNet === null ? null : latestTotals.net - prevNet;
-  const deltaPct = (prevNet && prevNet !== 0) ? (delta / Math.abs(prevNet)) * 100 : null;
+  const lastDelta = prevNet === null ? null : latestTotals.net - prevNet;
+  const lastDeltaPct = (lastDelta !== null && prevNet !== 0) ? (lastDelta / Math.abs(prevNet)) * 100 : null;
+  const lastDeltaClass = lastDelta === null ? '' : lastDelta >= 0 ? 'pos' : 'neg';
+  const lastDeltaStr = lastDelta === null ? '' :
+    `${lastDelta >= 0 ? '↑' : '↓'} $${fmt(Math.abs(lastDelta))}${lastDeltaPct !== null ? ` (${Math.abs(lastDeltaPct).toFixed(1)}%)` : ''} since last snapshot`;
 
-  // Overall range (first vs latest).
-  const firstNet = snapshotTotals(snaps[0]).net;
-  const totalChange = latestTotals.net - firstNet;
-
+  // The chart + range delta both respect the selected time range, filtered
+  // and anchored to your most recent snapshot (see filterSnapsByRange).
+  const range = config.accountsChartRange || 'all';
+  const rangedSnaps = filterSnapsByRange(snaps, range);
+  const baseline = rangedSnaps.length > 0 ? rangedSnaps[0] : snaps[0];
+  const baselineNet = snapshotTotals(baseline).net;
+  const delta = (rangedSnaps.length > 1) ? latestTotals.net - baselineNet : null;
+  const deltaPct = (delta !== null && baselineNet !== 0) ? (delta / Math.abs(baselineNet)) * 100 : null;
   const deltaClass = delta === null ? '' : delta >= 0 ? 'pos' : 'neg';
   const deltaStr = delta === null ? '' :
-    `${delta >= 0 ? '+' : '−'}$${fmt(Math.abs(delta))}${deltaPct !== null ? ` (${delta >= 0 ? '+' : '−'}${Math.abs(deltaPct).toFixed(1)}%)` : ''} since last snapshot`;
+    `${delta >= 0 ? '↑' : '↓'} $${fmt(Math.abs(delta))}${deltaPct !== null ? ` (${Math.abs(deltaPct).toFixed(1)}%)` : ''} · ${chartRangeLabel(range)}`;
 
-  // Sinking fund balances — money committed to funds.
-  const totalFundBalance = state.autoFunds.reduce((a, f) => a + computeFund(f).balance, 0);
-  // Available = liquid assets (assets − liabilities) minus fund commitments.
-  const availableNet = latestTotals.liquid - totalFundBalance;
+  const rangePills = CHART_RANGES.map(r =>
+    `<button class="range-pill ${range === r.id ? 'active' : ''}" data-action="set-chart-range" data-range="${r.id}">${r.label}</button>`
+  ).join('');
 
-  const hero = `
+  const stickyBar = `
+    <div class="net-worth-sticky" id="net-worth-sticky">
+      <span class="net-worth-sticky-label">Net worth</span>
+      <span class="net-worth-sticky-value ${latestTotals.net < 0 ? 'negative' : ''}">$${fmt(latestTotals.net)}</span>
+      ${lastDelta !== null ? `<span class="net-worth-sticky-delta ${lastDeltaClass}">${lastDelta >= 0 ? '↑' : '↓'} $${fmt(Math.abs(lastDelta))}</span>` : ''}
+    </div>
+  `;
+
+  const heroChart = `
     <div class="assets-hero">
-      <div class="assets-hero-main">
-        <div class="hero-label">Net worth · ${escapeHtml(formatDateShort(latest.date))}</div>
-        <div class="assets-net ${latestTotals.net < 0 ? 'negative' : ''}">$${fmt(latestTotals.net)}</div>
-        ${delta !== null ? `<div class="assets-delta ${deltaClass}">${deltaStr}</div>` : '<div class="assets-delta muted">Your first snapshot — add another to start tracking change.</div>'}
-      </div>
-      <div class="assets-hero-side">
-        <div class="assets-stat">
-          <span class="assets-stat-label">Liquid assets</span>
-          <span class="assets-stat-value pos">$${fmt(latestTotals.assets)}</span>
-        </div>
-        ${latestTotals.nonAvailable > 0 ? `
-        <div class="assets-stat">
-          <span class="assets-stat-label">Non-available assets</span>
-          <span class="assets-stat-value" style="color: var(--text-dim);">$${fmt(latestTotals.nonAvailable)}</span>
-        </div>` : ''}
-        <div class="assets-stat">
-          <span class="assets-stat-label">Total liabilities</span>
-          <span class="assets-stat-value neg">$${fmt(latestTotals.liabilities)}</span>
-        </div>
-        ${snaps.length > 1 ? `
-        <div class="assets-stat">
-          <span class="assets-stat-label">Since first snapshot</span>
-          <span class="assets-stat-value ${totalChange >= 0 ? 'pos' : 'neg'}">${totalChange >= 0 ? '+' : '−'}$${fmt(Math.abs(totalChange))}</span>
-        </div>` : ''}
-        ${totalFundBalance > 0 || latestTotals.nonAvailable > 0 ? `
-        <div class="assets-stat" style="border-top: 1px dashed var(--border); margin-top: 4px; padding-top: 12px;">
-          <span class="assets-stat-label" style="font-weight: 500; color: var(--text);">Available</span>
-          <span class="assets-stat-value ${availableNet >= 0 ? 'pos' : 'neg'}" style="font-size: 18px;">$${fmt(availableNet)}</span>
-        </div>
-        <div class="assets-stat" style="margin-top:-4px;">
-          <span class="assets-stat-label" style="font-size:10px;color:var(--text-faint);">Liquid − liabilities${totalFundBalance > 0 ? ` − $${fmt(totalFundBalance)} in funds` : ''}</span>
-        </div>` : ''}
-      </div>
+      <div class="hero-label">Net worth · ${escapeHtml(formatDateShort(latest.date))}</div>
+      <div class="assets-net ${latestTotals.net < 0 ? 'negative' : ''}">$${fmt(latestTotals.net)}</div>
+      ${delta !== null
+        ? `<div class="assets-delta ${deltaClass}">${deltaStr}</div>`
+        : `<div class="assets-delta muted">${snaps.length < 2 ? 'Add another snapshot to start tracking change.' : 'Not enough snapshots in this range to show change.'}</div>`}
+      ${lastDelta !== null ? `<div class="assets-delta-sub ${lastDeltaClass}">${lastDeltaStr}</div>` : ''}
+      ${rangedSnaps.length >= 2 ? buildNetWorthChart(rangedSnaps) : `<div class="chart-hint">${snaps.length < 2 ? 'Add at least one more snapshot to see your trend chart.' : 'Not enough snapshots in this range yet — try a wider one.'}</div>`}
+      <div class="range-pills">${rangePills}</div>
     </div>
   `;
 
-  const chart = snaps.length >= 2 ? `
-    <div class="assets-chart-card">
-      <div class="assets-chart-head">
-        <span class="group-title">Trend</span>
-        <span class="group-stats">${snaps.length} snapshots</span>
-      </div>
-      ${buildAssetsChart(snaps)}
-    </div>
-  ` : `
-    <div class="assets-chart-card">
-      <div class="chart-hint">Add at least one more snapshot to see your trend chart.</div>
-    </div>
-  `;
-
-  // Snapshot editor cards — most recent first.
-  const snapCards = [...snaps].reverse().map(snap => {
+  // Snapshot editor cards — most recent first. Each snapshot only shows
+  // accounts that were active on its date — added by then and not yet
+  // removed — or already has a recorded entry (a safety net for when a
+  // snapshot's date gets edited backward after the fact, or an account is
+  // later archived). So a brand-new account never appears in your older
+  // history, and a removed one keeps showing correctly in every snapshot
+  // from before it was removed. Older snapshots start rolled up
+  // automatically; only the latest one opens by default, though every one
+  // stays expandable.
+  const sortedDesc = [...snaps].reverse();
+  const snapCards = sortedDesc.map((snap, idx) => {
     const t = snapshotTotals(snap);
-    const entryRows = snap.entries.map(e => `
-      <div class="entry-row" data-entry-id="${e.id}">
-        <input class="plan-input entry-name" type="text" value="${escapeHtml(e.name)}"
-               data-snap-id="${snap.id}" data-entry-id="${e.id}" data-entry-field="name" placeholder="Account name" />
-        <select class="plan-input entry-type" data-snap-id="${snap.id}" data-entry-id="${e.id}" data-entry-field="type">
-          <option value="asset" ${e.type === 'asset' ? 'selected' : ''}>Asset (+)</option>
-          <option value="nonAvailable" ${e.type === 'nonAvailable' ? 'selected' : ''}>Non-Available (+)</option>
-          <option value="liability" ${e.type === 'liability' ? 'selected' : ''}>Liability (−)</option>
-        </select>
-        <input class="plan-input entry-amount ${e.type === 'liability' ? 'is-liab' : e.type === 'nonAvailable' ? 'is-locked' : 'is-asset'}" type="number" step="0.01" inputmode="decimal"
-               value="${e.amount}" data-snap-id="${snap.id}" data-entry-id="${e.id}" data-entry-field="amount" placeholder="0.00" />
-        <button class="plan-row-delete" data-action="remove-entry" data-snap-id="${snap.id}" data-entry-id="${e.id}" aria-label="Remove ${escapeHtml(e.name)}" title="Remove">×</button>
+    const visibleAccounts = state.accounts.filter(acct =>
+      (acct.dateAdded <= snap.date && (!acct.deletedDate || snap.date <= acct.deletedDate))
+      || snap.entries.some(e => e.accountId === acct.id)
+    );
+    const entryRows = visibleAccounts.map(acct => {
+      const ent = snap.entries.find(e => e.accountId === acct.id);
+      const amount = ent ? ent.amount : 0;
+      return `
+      <div class="entry-row">
+        <div class="entry-acct-label">
+          ${institutionBadge(acct, 24)}
+          <span class="entry-acct-name">${escapeHtml(acct.name)}${acct.last4 ? ` <span class="entry-acct-last4">•••• ${escapeHtml(acct.last4)}</span>` : ''}</span>
+        </div>
+        <span class="acct-cat-badge acct-cat-badge-sm ${categoryClass(acct.category)}">${categoryLabel(acct.category)}</span>
+        <input class="plan-input entry-amount ${categoryClass(acct.category)}" type="number" step="0.01" inputmode="decimal"
+               value="${amount}" data-snap-id="${snap.id}" data-acct-id="${acct.id}" data-entry-amount-field="amount" placeholder="0.00" />
       </div>
-    `).join('');
+    `;
+    }).join('');
 
     const snapFundBal = (snap.fundBalance !== null && snap.fundBalance !== undefined) ? snap.fundBalance : null;
 
-    const collapsed = !!config.collapsedSections['snap-' + snap.id];
+    const key = 'snap-' + snap.id;
+    const collapsed = key in config.collapsedSections ? !!config.collapsedSections[key] : idx !== 0;
     return `
       <div class="snap-card" data-snap-id="${snap.id}">
         <div class="snap-head">
@@ -3844,14 +4598,9 @@ function renderAssets() {
         <div class="section-body snap-body ${collapsed ? 'collapsed' : ''}">
           <div class="snap-entries">
             <div class="entry-row entry-row-head">
-              <span>Account</span><span>Type</span><span>Balance</span><span></span>
+              <span>Account</span><span>Category</span><span>Balance</span>
             </div>
-            ${entryRows || '<div class="snap-empty">No line items — add one below.</div>'}
-          </div>
-          <div class="snap-add-row">
-            <button class="entry-add-btn" data-action="add-entry" data-snap-id="${snap.id}" data-entry-type="asset">+ Asset</button>
-            <button class="entry-add-btn" data-action="add-entry" data-snap-id="${snap.id}" data-entry-type="nonAvailable">+ Non-Available</button>
-            <button class="entry-add-btn" data-action="add-entry" data-snap-id="${snap.id}" data-entry-type="liability">+ Liability</button>
+            ${entryRows || `<div class="snap-empty">${state.accounts.length === 0 ? 'No accounts yet — add one above.' : "No accounts existed yet as of this snapshot's date."}</div>`}
           </div>
         </div>
         <div class="snap-foot">
@@ -3865,19 +4614,34 @@ function renderAssets() {
     `;
   }).join('');
 
-  const allCollapsed = snaps.length > 0 && snaps.every(s => config.collapsedSections['snap-' + s.id]);
+  const allCollapsed = snaps.every((s, i) => {
+    const key = 'snap-' + s.id;
+    const isLatest = i === snaps.length - 1;
+    return key in config.collapsedSections ? config.collapsedSections[key] : !isLatest;
+  });
+  const snapshotsSectionCollapsed = !!config.collapsedSections['snapshots-section'];
   return `
-    ${hero}
-    ${chart}
+    ${stickyBar}
+    ${heroChart}
+    ${buildHeaderRow(baseline, latest)}
     <div class="group-header assets-list-header">
-      <h2 class="group-title">Snapshots</h2>
+      <div class="plan-section-head-left">
+        <button class="section-toggle ${snapshotsSectionCollapsed ? 'collapsed' : ''}" data-action="toggle-section" data-section-key="snapshots-section" aria-label="Toggle snapshots section" aria-expanded="${!snapshotsSectionCollapsed}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+        <h2 class="group-title">Snapshots</h2>
+      </div>
       <div class="assets-list-actions">
         <button class="btn-secondary" data-action="toggle-all-snapshots" data-collapse="${allCollapsed ? 'false' : 'true'}">${allCollapsed ? 'Expand all' : 'Collapse all'}</button>
         <button class="btn-secondary" data-action="add-snapshot">+ New snapshot</button>
       </div>
     </div>
-    <div class="snap-list">
-      ${snapCards}
+    <div class="section-body ${snapshotsSectionCollapsed ? 'collapsed' : ''}">
+      <div class="snap-list">
+        ${snapCards}
+      </div>
     </div>
   `;
 }
@@ -4175,6 +4939,8 @@ function renderSettings() {
 // ============================================================
 function attachViewHandlers() {
   attachDragHandlers();
+  setupNetWorthChartHover();
+  setupStickyBar();
   // Plan inputs
   document.querySelectorAll('.plan-input').forEach(input => {
     if (input.dataset.srcId || input.dataset.taxField) return; // handled separately
@@ -4216,9 +4982,9 @@ function attachViewHandlers() {
     el.addEventListener('change', e => updateSnapshotField(el.dataset.snapId, el.dataset.snapField, e.target.value));
   });
 
-  // Assets: entry name/type/amount
-  document.querySelectorAll('[data-entry-field]').forEach(el => {
-    el.addEventListener('change', e => updateEntry(el.dataset.snapId, el.dataset.entryId, el.dataset.entryField, e.target.value));
+  // Accounts: per-account balance amount within a snapshot
+  document.querySelectorAll('[data-entry-amount-field]').forEach(el => {
+    el.addEventListener('change', e => updateEntryAmount(el.dataset.snapId, el.dataset.acctId, e.target.value));
   });
 
   // Action buttons
@@ -4234,11 +5000,19 @@ function attachViewHandlers() {
       else if (action === 'remove-source') removeIncomeSource(ds.srcId);
       else if (action === 'add-snapshot') addSnapshot();
       else if (action === 'remove-snapshot') removeSnapshot(ds.snapId);
-      else if (action === 'add-entry') addEntry(ds.snapId, ds.entryType);
-      else if (action === 'remove-entry') removeEntry(ds.snapId, ds.entryId);
+      else if (action === 'add-account') showAccountModal(null);
+      else if (action === 'edit-account') showAccountModal(findAccount(ds.acctId));
+      else if (action === 'delete-account') removeAccount(ds.acctId);
+      else if (action === 'restore-account') restoreAccount(ds.acctId);
+      else if (action === 'hard-delete-account') hardDeleteAccount(ds.acctId);
       else if (action === 'toggle-snapshot') toggleSnapshot(ds.snapId);
       else if (action === 'toggle-all-snapshots') toggleAllSnapshots(ds.collapse === 'true');
       else if (action === 'toggle-section') toggleSection(ds.sectionKey);
+      else if (action === 'set-chart-range') {
+        config.accountsChartRange = ds.range;
+        saveConfig();
+        render();
+      }
       else if (action === 'set-plan-view') {
         config.planViewMode = ds.view === 'planned' ? 'planned' : 'spent';
         saveConfig();
@@ -4358,6 +5132,135 @@ function exportData() {
 }
 
 // ============================================================
+//  ACCOUNT MODAL — add or edit an account
+// ============================================================
+function showAccountModal(existing) {
+  const host = document.getElementById('modal-host');
+  const isEdit = !!existing;
+  const today = new Date().toISOString().slice(0, 10);
+  const draft = existing
+    ? { ...existing }
+    : { name: '', type: 'checking', institutionId: 'chase', institutionCustom: '', last4: '', category: 'asset', dateAdded: today };
+
+  const typeOptions = ACCOUNT_TYPES.map(t =>
+    `<option value="${t.id}" ${draft.type === t.id ? 'selected' : ''}>${escapeHtml(t.label)}</option>`
+  ).join('');
+  const instOptions = INSTITUTIONS.map(i =>
+    `<option value="${i.id}" ${draft.institutionId === i.id ? 'selected' : ''}>${escapeHtml(i.name)}</option>`
+  ).join('');
+
+  host.innerHTML = `
+    <div class="modal-overlay" id="modal-overlay">
+      <div class="modal" id="modal">
+        <div class="modal-header">
+          <h2 class="modal-title">${isEdit ? 'Edit account' : 'Add account'}</h2>
+          <button class="icon-btn" id="modal-close" aria-label="Close">✕</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Account nickname</label>
+          <input class="form-input" type="text" id="acct-name" placeholder="e.g. Everyday Checking" value="${escapeHtml(draft.name)}" autofocus />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Account type</label>
+          <select class="form-select" id="acct-type">${typeOptions}</select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Financial institution</label>
+          <div class="inst-picker">
+            <span class="inst-preview" id="acct-inst-preview">${institutionBadge(draft.institutionId === 'custom' ? { institutionId: 'custom', institutionCustom: draft.institutionCustom || '?' } : { institutionId: draft.institutionId }, 36)}</span>
+            <select class="form-select" id="acct-institution" style="flex:1;">${instOptions}</select>
+          </div>
+          <input class="form-input" type="text" id="acct-institution-custom" placeholder="Institution name" value="${escapeHtml(draft.institutionCustom)}"
+                 style="margin-top:8px; ${draft.institutionId === 'custom' ? '' : 'display:none;'}" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last 4 digits (optional)</label>
+          <input class="form-input" type="text" id="acct-last4" inputmode="numeric" maxlength="4" placeholder="1234" value="${escapeHtml(draft.last4)}" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Category — how it counts toward net worth</label>
+          <select class="form-select" id="acct-category">
+            <option value="asset" ${draft.category === 'asset' ? 'selected' : ''}>Asset (+, liquid)</option>
+            <option value="nonAvailable" ${draft.category === 'nonAvailable' ? 'selected' : ''}>Non-Available asset (+, illiquid e.g. retirement)</option>
+            <option value="liability" ${draft.category === 'liability' ? 'selected' : ''}>Liability (−, owed)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date added</label>
+          <input class="form-input" type="date" id="acct-date-added" value="${escapeHtml(draft.dateAdded || today)}" />
+          <div style="font-size:11px;color:var(--text-faint);margin-top:6px;line-height:1.5;">
+            Snapshots dated before this won't show this account. If you've actually had it for a while and want it reflected in older snapshots, set this back to when you opened it.
+          </div>
+        </div>
+        <button class="btn-primary" id="acct-save-btn">${isEdit ? 'Save changes' : 'Add account'}</button>
+        ${isEdit ? `<button class="btn-secondary" id="acct-delete-btn" style="margin-top:8px;">Delete account</button>` : ''}
+      </div>
+    </div>`;
+
+  const closeModal = () => { host.innerHTML = ''; };
+  document.getElementById('modal-overlay').addEventListener('click', e => {
+    if (e.target.id === 'modal-overlay') closeModal();
+  });
+  document.getElementById('modal-close').addEventListener('click', closeModal);
+
+  const typeSel = document.getElementById('acct-type');
+  const instSel = document.getElementById('acct-institution');
+  const instCustom = document.getElementById('acct-institution-custom');
+  const instPreview = document.getElementById('acct-inst-preview');
+  const categorySel = document.getElementById('acct-category');
+
+  // Picking a type suggests a matching category, but never overrides one
+  // the person already chose deliberately on an existing account edit.
+  typeSel.addEventListener('change', () => {
+    if (!isEdit) categorySel.value = accountTypeInfo(typeSel.value).defaultCategory;
+  });
+
+  function refreshInstPreview() {
+    const isCustom = instSel.value === 'custom';
+    instCustom.style.display = isCustom ? '' : 'none';
+    const fake = isCustom
+      ? { institutionId: 'custom', institutionCustom: instCustom.value || '?' }
+      : { institutionId: instSel.value };
+    instPreview.innerHTML = institutionBadge(fake, 36);
+  }
+  instSel.addEventListener('change', refreshInstPreview);
+  instCustom.addEventListener('input', refreshInstPreview);
+
+  document.getElementById('acct-save-btn').addEventListener('click', () => {
+    const name = document.getElementById('acct-name').value.trim();
+    const type = typeSel.value;
+    const institutionId = instSel.value;
+    const institutionCustom = instCustom.value.trim();
+    const last4 = document.getElementById('acct-last4').value.trim();
+    const category = categorySel.value;
+    const dateAdded = document.getElementById('acct-date-added').value || today;
+    if (institutionId === 'custom' && !institutionCustom) {
+      toast('Enter the institution name', 'error');
+      return;
+    }
+    if (last4 && !/^\d{1,4}$/.test(last4)) {
+      toast('Last 4 digits should be numbers only', 'error');
+      return;
+    }
+    if (dateAdded > today) {
+      toast("Date added can't be in the future", 'error');
+      return;
+    }
+    const data = { name, type, institutionId, institutionCustom, last4, category, dateAdded };
+    if (isEdit) updateAccount(existing.id, data);
+    else addAccount(data);
+    closeModal();
+  });
+
+  if (isEdit) {
+    document.getElementById('acct-delete-btn').addEventListener('click', () => {
+      closeModal();
+      removeAccount(existing.id);
+    });
+  }
+}
+
+// ============================================================
 //  MODAL
 // ============================================================
 function showAddModal() {
@@ -4439,7 +5342,7 @@ function init() {
     render();
   });
   document.getElementById('fab').addEventListener('click', () => {
-    if (activeTab === 'assets') addSnapshot();
+    if (activeTab === 'accounts') addSnapshot();
     else if (activeTab === 'funds') addFund();
     else showAddModal();
   });
